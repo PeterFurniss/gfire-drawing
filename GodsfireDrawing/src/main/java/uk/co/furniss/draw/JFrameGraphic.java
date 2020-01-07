@@ -19,7 +19,8 @@ public class JFrameGraphic extends JFrame {
         this.shapeProviders = shapeProviders;
 	}
 
-    public void paint(Graphics g) {
+    @Override
+	public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D) g;
         
         for (ShapeProvider shapes : shapeProviders) {

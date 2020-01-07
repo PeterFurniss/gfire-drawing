@@ -44,7 +44,8 @@ public class SalamanderOne extends JFrame{
 		        setSize(WIDTH, HEIGHT);
 			}
 		
-	    public void paint(Graphics g) {
+	    @Override
+		public void paint(Graphics g) {
 	        Graphics2D g2 = (Graphics2D) g;
 	        
 	        try {

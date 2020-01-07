@@ -29,6 +29,7 @@ public class XmlUtil {
 	}
 	
 	private static ThreadLocal<DocumentBuilder> docBuilders = new ThreadLocal<DocumentBuilder>() {
+		@Override
 		protected DocumentBuilder initialValue() {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			factory.setNamespaceAware(true);
