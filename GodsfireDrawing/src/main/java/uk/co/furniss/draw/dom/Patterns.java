@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
+// find the pattern hexes in the document and remember things about them
 public class Patterns {
 
 	private static final XPathUtil XPU = XPathUtil.getSVG();
@@ -37,7 +38,7 @@ public class Patterns {
 		
 		Element hex = patternHexes.get(HexColour.BLUE).getElement();
 		Element path = XPU.findElement(hex, "path[1]");
-		this.hexCorners = SVGutil.getPathCoords(path);
+		this.hexCorners = GfMapBuilder.getPathCoords(path);
 		float ht = 0.0f;
 		float wd = 0.0f;
 		for (float[] xy : hexCorners) {

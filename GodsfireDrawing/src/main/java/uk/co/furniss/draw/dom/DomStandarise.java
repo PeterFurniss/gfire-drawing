@@ -20,7 +20,7 @@ public class DomStandarise {
 
 		
 		String filePath = directory + fileName + svgSuffix;
-		
+		System.out.println("Reading " + filePath);
         Element svgDoc = XmlUtil.deserialiseXmlFile(filePath);
 		   
 //        for (Element pathElement : xp.findElements(svgDoc, "//path")) {
@@ -38,7 +38,7 @@ public class DomStandarise {
 //		}
 
         // from 1 onwards
-		SVGutil.rgbColours(svgDoc);
+		SVGmangler.rgbColours(svgDoc);
 
         XPathUtil xp = XPathUtil.getSVG();
         
@@ -61,20 +61,20 @@ public class DomStandarise {
 //        	SVGdutil.rotateColours(blue,2);
         
         // 3 : 3mod
-        SVGutil.unscaleText(svgDoc);
+        SVGmangler.unscaleText(svgDoc);
         
 //         remove inner translates first
         for (Element patternElement : patternElements) {
 			List<Element> innerTranslates = xp.findElements(patternElement, ".//g[@transform]");
 			for (Element inner : innerTranslates) {
-				SVGutil.untranslateGroup(inner);
+				SVGmangler.untranslateGroup(inner);
 			}
-			SVGutil.untranslateGroup(patternElement);
+			SVGmangler.untranslateGroup(patternElement);
 		}
 
       
         // from 3 onwards
-        SVGutil.roundNumbers(svgDoc);
+        SVGmangler.roundNumbers(svgDoc);
         
         String outFile = directory + fileName + "_mod" + svgSuffix;
         try(  PrintWriter out = new PrintWriter( outFile )  ){

@@ -13,7 +13,9 @@ public class DomReplicate {
 
 		
 		String filePath = directory + fileName + svgSuffix;
+		System.out.println("Will read " + filePath);
 
+		// half the map
         float spacing = 34.0f;
 		int rows = 8;
 		int cols = 12;
@@ -28,7 +30,7 @@ public class DomReplicate {
         gf.setPlanet(5,11,  4, "Nosset");
         gf.setPlanet(7, 2, -2, "Assab");
      	gf.markNextButOnes();
-        String outFile = directory + fileName + "_mod" + svgSuffix;
+        String outFile = directory + fileName + "_modc" + svgSuffix;
 
         gf.writeToFile(outFile);
         

@@ -84,6 +84,11 @@ public class Cell {
 	}
 
 	@Override
+	public String toString() {
+		return "Cell " + row + ", " + col + ((level > 0) ? ", +" : ", ") + level + " (" + cellColour + ")";
+	}
+
+	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;

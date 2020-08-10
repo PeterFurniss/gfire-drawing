@@ -5,6 +5,9 @@ import java.awt.Point;
 import java.awt.RadialGradientPaint;
 import java.awt.Shape;
 
+/**
+ * a hexagon of defined size, with a shaded colour on the centre
+ */
 public class Hex implements TintedShape {
 
 		private ColouredShape shape;

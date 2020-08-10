@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 
+// i think this cracks the hand-drawn pattern hexes to understand them
 public class PatternHex {
 
 	private static final XPathUtil XPU = XPathUtil.getSVG();
@@ -22,7 +23,7 @@ public class PatternHex {
 		this.colour = colour;
 		this.id = element.getAttribute("id");
 		Element path = XPU.findElement(hexElement, "path[1]");
-		float[][] pathCoords = SVGutil.getPathCoords(path);
+		float[][] pathCoords = GfMapBuilder.getPathCoords(path);
 		float topX = 0.0f;
 		float topY = 0.0f;
 		for (float[] xy : pathCoords) {

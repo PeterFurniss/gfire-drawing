@@ -9,7 +9,7 @@ public class Board {
 
 	int maxRows;
 	int maxCols;
-	private final SVGutil svg;
+	private final GfMapBuilder svg;
 	private Set<Cell> nextButOne = new HashSet<>();
 	
 	public Board(String patternFileName, int maxRows, int maxCols, float spacing) {
@@ -18,9 +18,9 @@ public class Board {
 		
         Element svgDoc = XmlUtil.deserialiseXmlFile(patternFileName);
 
-        svg = new SVGutil(svgDoc, spacing);
+        svg = new GfMapBuilder(svgDoc, spacing);
         
-		SVGutil.ensureNamespace("xlink", XPathUtil.XLINK_NS, svgDoc);
+		GfMapBuilder.ensureNamespace("xlink", XPathUtil.XLINK_NS, svgDoc);
 
 
     	makeMap();
@@ -28,6 +28,7 @@ public class Board {
 	}
 
 	private void makeMap() {
+		svg.addComment("the hexes by row, column and colour");
 		for (int row = 0; row < maxRows; row++) {
     		for (int col = 0; col < maxCols; col++) {
     			svg.addHex(HexColour.RED, row, col);
@@ -36,7 +37,8 @@ public class Board {
         		
         	}
         }
-        
+        // do the line links between hexes of same colour
+		svg.addComment("linking lines between hexes of the same colour");
      	for (int row = 0; row < maxRows; row++) {
      		int odd = row % 2;
     		for (int col = 0; col < maxCols; col++) {
@@ -65,6 +67,7 @@ public class Board {
         }
 	}
 	
+	// mark system cells and their neighbours
 	public void setPlanet(int row, int col, int gfLevel, String name) {
      	Cell sys = new Cell(row, col, gfLevel);
      	Set<Cell> closer = new HashSet<>();
@@ -76,11 +79,17 @@ public class Board {
 			closer.add(neighbour);
 			ourNextButOne.addAll(neighbour.neighbours(maxRows,  maxCols));
 		}
-     	ourNextButOne.removeAll(closer);
+     	// the next-but-ones overlap for some systems (Soont and Assab), so we combine them all in a hashset to 
+     	// avoid duplicates
+//     	int before = nextButOne.size();
      	nextButOne.addAll(ourNextButOne);
+//     	System.out.println(name + " ( at " + sys + ") has " + ourNextButOne.size() + " next but one, of which " + (nextButOne.size() - before)
+//     			+ " are new");
+//     	System.out.println(ourNextButOne);
 	}
 
 	public void markNextButOnes() {
+		svg.addComment("next-but-one cells for all systems (which may overlap)");
      	for (Cell cell : nextButOne) {
 			svg.nextButOneCell(cell);
 		}

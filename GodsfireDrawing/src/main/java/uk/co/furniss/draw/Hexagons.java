@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * make a grid of tinted hexagons. Not sure about the colour 
+ */
 public class Hexagons implements ShapeProvider {
 
 	private final List<Hex> hexes;
@@ -25,6 +28,11 @@ public class Hexagons implements ShapeProvider {
 				
 	};
 	
+	/**
+	 * create a grid of hexagons of defined side.
+	 * Colour cycles by row r - g - b (pastel)
+	 * @param side
+	 */
 	public Hexagons(int side) {
         randomGenerator = new Random();
 

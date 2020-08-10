@@ -7,7 +7,7 @@ import java.util.List;
 public class TestSVGfile {
 
 
-   
+    // write a test file  - currently of plain coloured hexagons
 
 	public static void main(String[] args) throws IOException {
 

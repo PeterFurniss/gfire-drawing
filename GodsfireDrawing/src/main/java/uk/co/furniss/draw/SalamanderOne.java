@@ -29,6 +29,11 @@ import com.kitfox.svg.SVGUniverse;
 import com.kitfox.svg.Use;
 import com.kitfox.svg.animation.AnimationElement;
 
+
+// (Jul 2020) looks like an experiment to find out what java manipulations on an inkscape-created svg file
+// do to the xml.
+
+
 public class SalamanderOne extends JFrame{
     private static final int WIDTH = 1000;
     private static final int HEIGHT = 1500;

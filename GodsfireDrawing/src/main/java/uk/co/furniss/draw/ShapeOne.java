@@ -8,7 +8,7 @@ import java.util.Random;
 
 import javax.swing.JFrame;
 
-
+//  unused (Jul 2020)
 public class ShapeOne extends JFrame {
     private static final int NUM_SHAPES = 5;
     private static final int NUM_POINTS_PER_SHAPE = 5;
@@ -18,7 +18,6 @@ public class ShapeOne extends JFrame {
     private List<ColouredShape> shapes;
     private Random randomGenerator;
 
-    
 	public ShapeOne(String title) {
         super(title);
         setVisible(true);
