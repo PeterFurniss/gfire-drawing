@@ -28,6 +28,13 @@ public class SVGmangler  {
  		
 	}
 
+	public static SvgObject getSvgObject(Element topElement, String name) {
+		Element xmlElement = XPU.findElement(topElement, "//*[@id=" + name + "]");
+		if (xmlElement != null) {
+			return new SvgObject(xmlElement);
+		}
+		throw new IllegalStateException("Cannot find svg object " + name);
+	}
 
 	public static float[][] getPathCoords(Element pathElement) {
 		String dString = pathElement.getAttribute("d");
@@ -60,17 +67,21 @@ public class SVGmangler  {
 
 	}
 	
-
+	/**
+	 *  round any number representing position to 2 decimal places.
+	 *  not sure this really works fo all cases
+	 * @param topElement scope of change
+	 */
 	public static void roundNumbers(Element topElement) {
-		for (Element attribElement : XPU.findElements(topElement, "//*[@*]")) {
-			boolean normalElement = !attribElement.getNodeName().contains("text");
+		for (Element elementWithAttributes : XPU.findElements(topElement, "//*[@*]")) {
+			boolean normalElement = !elementWithAttributes.getNodeName().contains("text");
 
-			for (Node attribute : XPU.findNodes(attribElement, "@*")) {
+			for (Node attribute : XPU.findNodes(elementWithAttributes, "@*")) {
 				
 				String attributeName = attribute.getNodeName();
 				if (normalElement || attributeName.equals("x") || attributeName.equals("y")) {
 					String attrValue = attribute.getNodeValue();
-					attribElement.setAttribute(attribute.getNodeName(),
+					elementWithAttributes.setAttribute(attribute.getNodeName(),
 							attrValue.replaceAll("(\\d*\\.\\d{2})\\d+", "$1"));
 				}
 			}
@@ -134,7 +145,11 @@ public class SVGmangler  {
 	
 	private static final Pattern SCALE_PATTERN = Pattern.compile("scale\\(([\\d\\.-]+),([\\d\\.-]+)\\)");
 
-
+	/**
+	 * for any text element in top that has a transform with scale, apply the transform directly
+	 * to the x and y attributes of the text element and any of its children (such as tspan)
+	 * @param top  the element at the top of the scope of the action
+	 */
 	public static void unscaleText(Element top) {
 		List<Element> scaledText = XPU.findElements(top, "//text[@transform]");
 		for (Element textElement : scaledText) {

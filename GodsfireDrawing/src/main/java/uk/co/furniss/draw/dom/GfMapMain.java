@@ -1,9 +1,9 @@
 package uk.co.furniss.draw.dom;
 
-public class DomReplicate {
+public class GfMapMain {
 
-	public DomReplicate() {
-		// TODO Auto-generated constructor stub
+	private GfMapMain() {
+		
 	}
 
 	public static void main(String[] args) {
@@ -20,7 +20,7 @@ public class DomReplicate {
 		int rows = 8;
 		int cols = 12;
 		
-        Board gf = new Board(filePath, rows, cols, spacing);
+        GfMap gf = new GfMap(filePath, rows, cols, spacing);
         
         gf.setPlanet(2, 2, -4, "Loshan");
         gf.setPlanet(3, 4,  2, "Kol");

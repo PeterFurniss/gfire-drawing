@@ -9,10 +9,13 @@ import org.w3c.dom.Element;
 
 public class DomStandarise {
 
-	public DomStandarise() {
-		// TODO Auto-generated constructor stub
+	private DomStandarise() {
+		
 	}
 
+	// i think this was to make various modifications to the hexN.svg files as I progressed
+	// in working out the super-hexes
+	
 	public static void main(String[] args) {
 		String directory = "c:/Users/Peter/Documents/games/godfire_pix/basepix/";
 		String svgSuffix = ".svg";
@@ -38,13 +41,16 @@ public class DomStandarise {
 //		}
 
         // from 1 onwards
+        //   standardise any colour references (if done with @style - doesn't currently work for fill or stroke-color
 		SVGmangler.rgbColours(svgDoc);
 
         XPathUtil xp = XPathUtil.getSVG();
         
+        // find the three pattern hexes by their specific names
         Element red = xp.findElement(svgDoc, "//g[@id='redPattern']");
         Element blue = xp.findElement(svgDoc, "//g[@id='bluePattern']");
         Element green = xp.findElement(svgDoc, "//g[@id='greenPattern']");
+        
         if (red == null) {
         	throw new IllegalArgumentException("No redPattern");
         }
@@ -56,10 +62,12 @@ public class DomStandarise {
         }
         List<Element> patternElements = Arrays.asList(red, green, blue);
         
+        // one-off colour juggling
         // 1 -> 2 : change colours
 //        	SVGdutil.rotateColours(green,1);
 //        	SVGdutil.rotateColours(blue,2);
         
+        //  i think this modifies the 
         // 3 : 3mod
         SVGmangler.unscaleText(svgDoc);
         

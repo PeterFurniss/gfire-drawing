@@ -5,14 +5,14 @@ import java.util.Set;
 
 import org.w3c.dom.Element;
 
-public class Board {
+public class GfMap {
 
 	int maxRows;
 	int maxCols;
 	private final GfMapBuilder svg;
 	private Set<Cell> nextButOne = new HashSet<>();
 	
-	public Board(String patternFileName, int maxRows, int maxCols, float spacing) {
+	public GfMap(String patternFileName, int maxRows, int maxCols, float spacing) {
 		this.maxRows = maxRows;
 		this.maxCols = maxCols;
 		

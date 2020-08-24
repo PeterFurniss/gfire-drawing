@@ -192,21 +192,6 @@ public class GfMapBuilder extends SVGbuilder {
 
 	}
 	
-	public static float[][] getPathCoords(Element pathElement) {
-		String dString = pathElement.getAttribute("d");
-		String [] pieces = dString.split("\\s+");
-		float [][] answer = new float[pieces.length - 2][];
-		for (int i = 1; i < pieces.length -1; i++) {
-			String [] xyString = pieces[i].split(",");
-			float [] xy = new float[2];
-			xy[0] = Float.parseFloat(xyString[0]);
-			xy[1] = Float.parseFloat(xyString[1]);
-			answer[i-1] = xy;
-		}
-		return answer;
-	}
-
-	
 	public void roundNumbers() {
 		SVGmangler.roundNumbers(svgDoc);
 	}

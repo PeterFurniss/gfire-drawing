@@ -35,7 +35,11 @@ import com.kitfox.svg.animation.AnimationElement;
 
 
 public class SalamanderOne extends JFrame{
-    private static final int WIDTH = 1000;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static final int WIDTH = 1000;
     private static final int HEIGHT = 1500;
 
 	SVGDiagram diagram;

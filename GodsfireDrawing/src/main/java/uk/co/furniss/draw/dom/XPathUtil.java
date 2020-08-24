@@ -15,6 +15,12 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+/**
+ * wrap saxon XPath to make it more java-friendly.
+ *  pre-set the default element namespace
+ *  Return specific java types rather than xpath types.
+ *  ensure thread safety (Probably took some of this from work things)
+ */
 public class XPathUtil {
 
 	public static final String SVG_NS = "http://www.w3.org/2000/svg";
