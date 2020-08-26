@@ -28,7 +28,7 @@ public class ImageLibrary {
 
 	}
 
-	SvgObject findSvgObject(String name) {
+	public SvgObject findSvgObject(String name) {
 		if (images.containsKey(name)) {
 			return images.get(name);
 		}

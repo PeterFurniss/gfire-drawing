@@ -23,19 +23,12 @@ public class PatternHex {
 		this.colour = colour;
 		this.id = element.getAttribute("id");
 		Element path = XPU.findElement(hexElement, "path[1]");
-		float[][] pathCoords = GfMapBuilder.getPathCoords(path);
-		float topX = 0.0f;
-		float topY = 0.0f;
-		for (float[] xy : pathCoords) {
-			if (xy[0] > topX) {
-				topX = xy[0];
-			}
-			if (xy[1] > topY) {
-				topY = xy[1];
-			}
-		}
-		float centreX = topX / 2.0f;
-		float centreY = topY / 2.0f;
+		List<XYcoords> pathCoords = GfMapBuilder.getPathCoords(path);
+
+		XYcoords max = XYcoords.maxXY(pathCoords);
+		
+		float centreX = max.getX() / 2.0f;
+		float centreY = max.getY() / 2.0f;
 		List<Element> rElements = XPU.findElements(hexElement,  "rect|g/rect[1]");
         if (rElements.size() != 12) {
         	throw new IllegalArgumentException("Found " + rElements.size() + " rect in " 

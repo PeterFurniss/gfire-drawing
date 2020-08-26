@@ -1,6 +1,7 @@
 package uk.co.furniss.draw.dom;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import org.w3c.dom.Element;
@@ -12,7 +13,7 @@ public class Patterns {
 
 	private Map<HexColour, PatternHex> patternHexes = new EnumMap<>(HexColour.class);
 
-	private final float[][] hexCorners;
+	private final List<XYcoords> hexCorners;
 	private final float hexHeight;
 	
 	public float getHexHeight() {
@@ -39,18 +40,10 @@ public class Patterns {
 		Element hex = patternHexes.get(HexColour.BLUE).getElement();
 		Element path = XPU.findElement(hex, "path[1]");
 		this.hexCorners = GfMapBuilder.getPathCoords(path);
-		float ht = 0.0f;
-		float wd = 0.0f;
-		for (float[] xy : hexCorners) {
-			if (xy[0] > wd) {
-				wd = xy[0];
-			}
-			if (xy[1] > ht) {
-				ht = xy[1];
-			}
-		}
-		hexHeight = ht;
-		hexWidth = wd;
+		System.out.println(hexCorners);
+		XYcoords max = XYcoords.maxXY(hexCorners);
+		hexHeight = max.getY();
+		hexWidth = max.getX();
 	}
 
 	public PatternHex getHex(HexColour colour) {
@@ -58,10 +51,10 @@ public class Patterns {
 	}
 	
 	public float getCornerX(int direction) {
-		return hexCorners[direction][0];
+		return hexCorners.get(direction).getX();
 	}
 	
 	public float getCornerY(int direction) {
-		return hexCorners[direction][1];
+		return hexCorners.get(direction).getY();
 	}
 }

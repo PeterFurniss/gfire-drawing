@@ -29,7 +29,7 @@ public class SVGmangler  {
 	}
 
 	public static SvgObject getSvgObject(Element topElement, String name) {
-		Element xmlElement = XPU.findElement(topElement, "//*[@id=" + name + "]");
+		Element xmlElement = XPU.findElement(topElement, "//*[@id='" + name + "']");
 		if (xmlElement != null) {
 			return new SvgObject(xmlElement);
 		}

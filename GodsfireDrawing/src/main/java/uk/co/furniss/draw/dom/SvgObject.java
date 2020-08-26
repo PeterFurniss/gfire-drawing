@@ -1,7 +1,5 @@
 package uk.co.furniss.draw.dom;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.w3c.dom.Element;
@@ -23,32 +21,21 @@ public class SvgObject {
 		// analyse the path to find overall size
 		// and possibly to canonicalise the start
 		
-		// modify to cope with multipl paths
-		Element path = XPU.findElement(hexElement, "path[1]");
-		float[][] pathCoords = SVGbuilder.getPathCoords(path);
-		XYcoords txty = getFirstXY(pathCoords);
-		
-		float centreX = txty.getX() / 2.0f;
-		float centreY = txty.getY() / 2.0f;
-		
-
+		// modify to cope with multiple paths - or it being the path itself
+		final Element path;
+		if (hexElement.getLocalName().equals("path")) {
+			path = hexElement;
+		} else{
+			path = XPU.findElement(hexElement, "path[1]");
 		}
+		List<XYcoords> pathCoords = SVGbuilder.getPathCoords(path);
+		XYcoords txty = XYcoords.maxXY(pathCoords);
+		
+		System.out.println("path nodes for " + id);
+		System.out.println(pathCoords);
+		System.out.println("max x, y " + txty);
+		
 
-
-
-	private XYcoords getFirstXY( float[][] pathCoords ) {
-		float topX = 0.0f;
-		float topY = 0.0f;
-		for (float[] xy : pathCoords) {
-			if (xy[0] > topX) {
-				topX = xy[0];
-			}
-			if (xy[1] > topY) {
-				topY = xy[1];
-			}
-		}
-		XYcoords txty = new XYcoords(topX, topY);
-		return txty;
 	}
 
 
