@@ -21,30 +21,27 @@ public class SvgObject {
 
 	private final String id;
 
-	public SvgObject (Element hexElement) {
-		this.element = hexElement;
+	public SvgObject (Element originalElement) {
+		this.element = originalElement;
 		this.id = element.getAttribute("id");
 		
-		// analyse the paths to find overall size
-		// and possibly to canonicalise the start
+		// remove any absolute paths
 		makePathsRelative();
-		
-//		// modify to cope with multiple paths - or it being the path itself
-//		final Element path;
-//		if (hexElement.getLocalName().equals("path")) {
-//			path = hexElement;
-//		} else{
-//			path = XPU.findElement(hexElement, "path[1]");
-//		}
-//		List<XYcoords> pathCoords = SVGbuilder.getPathCoords(path);
-//		XYcoords txty = XYcoords.maxXY(pathCoords);
-		
-//		System.out.println("path nodes for " + id);
-//		System.out.println(pathCoords);
-//		System.out.println("max x, y " + txty);
-
+	}
+	
+	/**
+	 * make a copy of the element, with a new id
+	 * @return
+	 */
+	private SvgObject(SvgObject original, String newId) {
+		this.element = (Element) original.element.cloneNode(true);
+		element.setAttribute("id", newId);
+		this.id = newId;
 	}
 
+	public SvgObject clone(String newId) {
+		return new SvgObject(this, newId);
+	}
 	/**
 	 * move the object so it's top left corner is at 0,0
 	 */
@@ -54,6 +51,7 @@ public class SvgObject {
 		
 		// this will need to work for all types
 		List<Element> pathElements = getPaths();
+		// this doesn't work for multiple objects
 		for (Element pathElement : pathElements) {
 			topleftcorners.put(pathElement, topLeftOfPath(pathElement));
 		}

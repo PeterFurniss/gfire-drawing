@@ -109,8 +109,13 @@ public class SVGbuilder {
 	 * @return
 	 */
 	protected Element addElement( String name ) {
-		Element child = parentDocument.createElementNS(XPathUtil.SVG_NS, name);
+		Element child = createElement(name);
 		svgDoc.appendChild(child);
+		return child;
+	}
+
+	Element createElement( String name ) {
+		Element child = parentDocument.createElementNS(XPathUtil.SVG_NS, name);
 		return child;
 	}
 
@@ -128,13 +133,18 @@ public class SVGbuilder {
 	}
 
 	public Element addTranslatedClone( String pattern, float dx, float dy ) {
+		Element use = createTranslatedClone(pattern, dx, dy);
+		svgDoc.appendChild(use);
+		return use;
+	}
+
+	Element createTranslatedClone( String pattern, float dx, float dy ) {
 		Element use = parentDocument.createElementNS(XPathUtil.SVG_NS, "use");
 		use.setAttribute("height", "100%");
 		use.setAttribute("width", "100%");
 		use.setAttribute("x", Float.toString(dx));
 		use.setAttribute("y", Float.toString(dy));
 		use.setAttributeNS(XPathUtil.XLINK_NS, "xlink:href", "#" + pattern);
-		svgDoc.appendChild(use);
 		return use;
 	}
 

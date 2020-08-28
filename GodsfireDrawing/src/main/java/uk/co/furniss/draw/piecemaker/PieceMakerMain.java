@@ -4,9 +4,10 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.List;
 
-import uk.co.furniss.draw.dom.SVGdocument;
+import org.w3c.dom.Element;
+
+import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.SvgObject;
-import uk.co.furniss.draw.gfmap.GfMap;
 import uk.co.furniss.xlsx.ExcelBook;
 
 /**
@@ -16,6 +17,8 @@ import uk.co.furniss.xlsx.ExcelBook;
  * 	piece silhouette is an image from an input svg file. object has a specific name
  */
 public class PieceMakerMain {
+
+	
 
 	private PieceMakerMain() {
 		
@@ -34,24 +37,43 @@ public class PieceMakerMain {
 		System.out.println("Will read specification file " + specFile);
 		ExcelBook tbook = new ExcelBook(specFile);
 
-		List<List<String>> defns = tbook.readCellsAsStrings("all", Arrays.asList("image", "topleft", "topright", "botleft", "botright", "botmid"));
+		List<List<String>> specs = tbook.readCellsAsStrings("all", Arrays.asList("image", "topleft", "topright", "botleft", "botright", "botmid"));
 
 		String silhouFile = directory + silhouName + svgSuffix;
 		System.out.println("Will read silhouette file " + silhouFile);
 		
-		SVGdocument images = new SVGdocument(silhouFile);
-		System.out.println(images.getLayerNames());
+		PiecesDocument piecesDoc = new PiecesDocument(silhouFile);
+		System.out.println(piecesDoc.getLayerNames());
 		
-		images.setLibraryLayer("angular");
-		for (List<String> defn : defns) {
-			SvgObject image = images.findSvgObject(defn.get(0));
+		// where are the prototypes ?
+		piecesDoc.setLibraryLayer("angular");
+
+		Element outputLayer = piecesDoc.obtainEmptyLayer("output");
+
+		// find the images, copy the element, move to top left and put it in the defs
+		// and add a clone to the output layer
+		float x = 20.0f;
+		float y = 20.0f;
+		for (List<String> spec : specs) {
+			String originalId = spec.get(0);
+			SvgObject image = piecesDoc.findSvgObject(originalId);
 			if (image == null) {
-				throw new IllegalArgumentException("Cannot find image " + defn.get(0) + " in image file");
+				throw new IllegalArgumentException("Cannot find image " + spec.get(0) + " in image file");
 			}
-			image.moveTopLeft();
+			SvgObject template = image.clone(originalId + PiecesDocument.TEMPLATE_SUFFIX );
+			// if testing move
+			//   image.moveTopLeft
+			// otherwise these
+			template.moveTopLeft();
+			piecesDoc.addDefObject(template);
+			
+			piecesDoc.addCloneOfTemplate(outputLayer, originalId, x, y);
+			x += 15.0f;
+			y += 20.0f;
+			
 		}
 
-		images.writeToFile(directory + outName + svgSuffix);
+		piecesDoc.writeToFile(directory + outName + svgSuffix);
         
 	}
 
