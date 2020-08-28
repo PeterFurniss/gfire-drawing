@@ -1,9 +1,12 @@
-package uk.co.furniss.draw.dom;
+package uk.co.furniss.draw.gfmap;
 
 import java.util.HashSet;
 import java.util.Set;
 
 import org.w3c.dom.Element;
+
+import uk.co.furniss.draw.dom.XPathUtil;
+import uk.co.furniss.draw.dom.XmlUtil;
 
 public class GfMap {
 

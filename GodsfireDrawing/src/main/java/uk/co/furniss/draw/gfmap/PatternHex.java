@@ -1,10 +1,13 @@
-package uk.co.furniss.draw.dom;
+package uk.co.furniss.draw.gfmap;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.w3c.dom.Element;
+
+import uk.co.furniss.draw.dom.XPathUtil;
+import uk.co.furniss.draw.dom.XYcoords;
 
 // i think this cracks the hand-drawn pattern hexes to understand them
 public class PatternHex {

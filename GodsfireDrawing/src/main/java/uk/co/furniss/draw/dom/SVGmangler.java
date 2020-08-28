@@ -15,8 +15,6 @@ public class SVGmangler  {
 	public static final XPathUtil XPU = XPathUtil.getSVG();
 
 
-
-
 	/**
 	 * build godsfire 3-d map
 	 * @param docElement	parent document (or element ?). Contains the pattern hexes
@@ -24,32 +22,39 @@ public class SVGmangler  {
 	 */
 	public SVGmangler(Element docElement) {
 		super();
-   
- 		
+	}
+
+	public static List<Element> getLayerElements(Element docElement) {
+		return XPU.findElements(docElement, "//g[@inkscape:groupmode='layer']");
+	}
+	
+	public static List<String> getLayerNames(Element docElement) {
+		List<Element> layerElements = getLayerElements(docElement);
+		List<String> names = new ArrayList<>();
+		for (Element layer : layerElements) {
+			names.add(XPU.findString(layer, "@inkscape:label"));
+		}
+		return names;
+		
+	}
+	
+	public static Element getLayerElement( Element docElement, String layerName ) {
+		return XPU.findElement(docElement, "//g[@inkscape:groupmode='layer' and @inkscape:label='" + layerName + "']");
 	}
 
 	public static SvgObject getSvgObject(Element topElement, String name) {
-		Element xmlElement = XPU.findElement(topElement, "//*[@id='" + name + "']");
+		System.out.println("Looking in " + topElement.getAttribute("id") + " for " + name);
+		Element xmlElement = XPU.findElement(topElement, ".//*[@id='" + name + "']");
 		if (xmlElement != null) {
 			return new SvgObject(xmlElement);
 		}
 		throw new IllegalStateException("Cannot find svg object " + name);
 	}
 
-	public static float[][] getPathCoords(Element pathElement) {
-		String dString = pathElement.getAttribute("d");
-		String [] pieces = dString.split("\\s+");
-		float [][] answer = new float[pieces.length - 2][];
-		for (int i = 1; i < pieces.length -1; i++) {
-			String [] xyString = pieces[i].split(",");
-			float [] xy = new float[2];
-			xy[0] = Float.parseFloat(xyString[0]);
-			xy[1] = Float.parseFloat(xyString[1]);
-			answer[i-1] = xy;
-		}
-		return answer;
-	}
-	
+	/**
+	 * convert colours defined in @style to named form
+	 * @param topElement
+	 */
 	public static void rgbColours(Element topElement) {
         for (Element styledElement : XPU.findElements(topElement, "//*[@style]")) {
 			BaseElement node = new BaseElement(styledElement);
@@ -62,7 +67,7 @@ public class SVGmangler  {
 		System.out.println("Looking for style in " + group.getNodeName() + ", id=" + group.getAttribute("id"));
         for (Element styledElement : XPU.findElements(group, ".//*[@style]")) {
 			BaseElement node = new BaseElement(styledElement);
-			node.rotateColour(node, rotations);
+			node.rotateColour(rotations);
         }
 
 	}
@@ -91,8 +96,8 @@ public class SVGmangler  {
 	private static final Pattern TRANSLATE_PATTERN = Pattern.compile("translate\\(([\\d-\\.]+),([\\d-\\.]+)\\)");
 	private static final Pattern XY_PATTERN = Pattern.compile("([\\d-\\.]+),([\\d-\\.]+)");
 	
-	// i think this takes a group and moves it all back to sit on the origin
-	//  won't work if there are line elements
+	// take a group, and if it has a translate transformation, apply that to the components of the group
+	//   doesn't cope with nested groups, so must apply to inner most first
 	public static void untranslateGroup(Element group) {
 		String transform = group.getAttribute("transform");
 		if (transform != null) {
@@ -101,6 +106,7 @@ public class SVGmangler  {
 				float dx = Float.parseFloat(m.group(1));
 				float dy = Float.parseFloat(m.group(2));
 			
+				// anything with an x attribute (rect, in particular) : reset x and y 
 				List<Element> xyElements = XPU.findElements(group, ".//*[@x]");
 				for (Element element : xyElements) {
 					float xx = Float.parseFloat(element.getAttribute("x")) + dx;
@@ -108,6 +114,7 @@ public class SVGmangler  {
 					element.setAttribute("x", Float.toString(xx));
 					element.setAttribute("y", Float.toString(yy));
 				}
+				// path - modify xy pairs.  currently doesn't work for commands that don't have paired params
 				List<Element> pathElements = XPU.findElements(group, ".//path");
 				for (Element path : pathElements) {
 					String pathString = path.getAttribute("d");
@@ -115,23 +122,28 @@ public class SVGmangler  {
 					List<String> newSteps = new ArrayList<>(steps.length);
 					int toMove = 1;
 					for (String step : steps) {
+						// look for x,y pair
 						Matcher mm = XY_PATTERN.matcher(step);
 						if (mm.matches() && toMove > 0) {
+							// we have one and it's the first such: change the move 
 							float nx = Float.parseFloat(mm.group(1)) + dx;
 							float ny = Float.parseFloat(mm.group(2)) + dy;
 							newSteps.add(Float.toString(nx) + "," + Float.toString(ny));
 							toMove--;
 						} else {
 							if (step.matches("[A-Z]")) {
+								// it's an absolute command, so coordinates are changed to apply the transform
 								System.out.println("set toMove high on " + step + " in " + path.getAttribute("id"));
 								toMove = 100;
 							} else if (toMove > 1) {
+								// relative command, so don't mangle things
 								toMove = 0;
 							}
 							newSteps.add(step);
 						}
 						
 					}
+					// having mangled the node coordinates, replace them
 					path.setAttribute("d", String.join(" ", newSteps));
 				}
 				group.removeAttribute("transform");
@@ -175,5 +187,6 @@ public class SVGmangler  {
 
 		}
 	}
+
 
 }

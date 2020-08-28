@@ -1,4 +1,4 @@
-package uk.co.furniss.draw.dom;
+package uk.co.furniss.draw.gfmap;
 
 public enum HexColour 
 		{RED (0.0f, 0.0f, "rgb(255,0,0)"),

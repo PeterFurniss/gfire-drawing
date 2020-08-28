@@ -39,7 +39,7 @@ public class BaseElement {
 		
 	}
 	
-	public void rotateColour(BaseElement node, int rotations) {
+	public void rotateColour(int rotations) {
 		String style = getStyle();
 		Matcher cM = COLOUR_PATTERN.matcher(style);
 		StringBuffer newStyle = new StringBuffer();

@@ -1,4 +1,4 @@
-package uk.co.furniss.draw.dom;
+package uk.co.furniss.draw.gfmap;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -6,8 +6,11 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
+import uk.co.furniss.draw.dom.XPathUtil;
+import uk.co.furniss.draw.dom.XYcoords;
+
 // find the pattern hexes in the document and remember things about them
-public class Patterns {
+public class GfPatternHexes {
 
 	private static final XPathUtil XPU = XPathUtil.getSVG();
 
@@ -26,7 +29,7 @@ public class Patterns {
 
 	private final float hexWidth;
 
-	public Patterns(Element svgDoc) {
+	public GfPatternHexes(Element svgDoc) {
 		for (HexColour colour : HexColour.values()) {
 			String idPattern = colour.name().toLowerCase() + "Pattern";
 			Element hexElement = XPU.findElement(svgDoc, "//g[@id='" + idPattern + "']");

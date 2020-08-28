@@ -25,7 +25,7 @@ public class XPathUtil {
 
 	public static final String SVG_NS = "http://www.w3.org/2000/svg";
 	public static final String XLINK_NS = "http://www.w3.org/1999/xlink";
-
+	public static final String INKSCAPE_NS = "http://www.inkscape.org/namespaces/inkscape";
 
 	private static ThreadLocal<Map<String, XPathExpression>> expressionsMap = new ThreadLocal<Map<String, XPathExpression>>() {
 
@@ -39,6 +39,9 @@ public class XPathUtil {
 
 
 	private final XPath xpath;
+	// the ancestral code possibly used the saxon version of this, but that's a wrapper for
+	// the Saxon NamespaceResolver, and I don't seem to have anything to remind me how that worked
+	private final NamespaceContextImpl nsContext;
 	
 	public static XPathUtil getSVG() {
 		return SVG;
@@ -47,13 +50,22 @@ public class XPathUtil {
 	private XPathUtil() {
 		XPathFactory xpf = new net.sf.saxon.xpath.XPathFactoryImpl();
 		xpath = xpf.newXPath();
-//		nsContext = new NamespaceContextImpl();
-//		xpath.setNamespaceContext(nsContext);
+		nsContext = new NamespaceContextImpl();
+		xpath.setNamespaceContext(nsContext);
+		nsContext.addPrefix("inkscape", INKSCAPE_NS);
 	}
 	
+	/**
+	 * 
+	 * @param nameSpace  default namespace
+	 */
 	public XPathUtil(String nameSpace) {
 		this();
 		((net.sf.saxon.xpath.XPathEvaluator) xpath).getStaticContext().setDefaultElementNamespace(nameSpace);
+	}
+	
+	public void addPrefix(String prefix, String uri) {
+		nsContext.addPrefix(prefix, uri);
 	}
 	
 	private XPathExpression getXPE(String xpString) {

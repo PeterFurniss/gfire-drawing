@@ -4,9 +4,9 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.List;
 
-import uk.co.furniss.draw.dom.GfMap;
-import uk.co.furniss.draw.dom.ImageLibrary;
+import uk.co.furniss.draw.dom.SVGdocument;
 import uk.co.furniss.draw.dom.SvgObject;
+import uk.co.furniss.draw.gfmap.GfMap;
 import uk.co.furniss.xlsx.ExcelBook;
 
 /**
@@ -34,20 +34,24 @@ public class PieceMakerMain {
 		System.out.println("Will read specification file " + specFile);
 		ExcelBook tbook = new ExcelBook(specFile);
 
-		List<List<String>> defns = tbook.readCellsAsStrings("Sheet1", Arrays.asList("image", "topleft", "topright", "botleft", "botright", "botmid"));
+		List<List<String>> defns = tbook.readCellsAsStrings("all", Arrays.asList("image", "topleft", "topright", "botleft", "botright", "botmid"));
 
 		String silhouFile = directory + silhouName + svgSuffix;
 		System.out.println("Will read silhouette file " + silhouFile);
 		
-		ImageLibrary images = new ImageLibrary(silhouFile);
+		SVGdocument images = new SVGdocument(silhouFile);
+		System.out.println(images.getLayerNames());
 		
+		images.setLibraryLayer("angular");
 		for (List<String> defn : defns) {
 			SvgObject image = images.findSvgObject(defn.get(0));
 			if (image == null) {
 				throw new IllegalArgumentException("Cannot find image " + defn.get(0) + " in image file");
 			}
+			image.moveTopLeft();
 		}
 
+		images.writeToFile(directory + outName + svgSuffix);
         
 	}
 

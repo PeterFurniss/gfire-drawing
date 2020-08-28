@@ -1,9 +1,13 @@
-package uk.co.furniss.draw.dom;
+package uk.co.furniss.draw.gfmap;
 
 import java.util.EnumMap;
 import java.util.Map;
 
 import org.w3c.dom.Element;
+
+import uk.co.furniss.draw.dom.SVGbuilder;
+import uk.co.furniss.draw.dom.SVGmangler;
+import uk.co.furniss.draw.dom.XPathUtil;
 
 public class GfMapBuilder extends SVGbuilder {
 	
@@ -19,7 +23,7 @@ public class GfMapBuilder extends SVGbuilder {
 
 	private final float xNumber;
 	private final float yNumber;
-	private final Patterns patterns;
+	private final GfPatternHexes patterns;
 
 	/**
 	 * build godsfire 3-d map
@@ -36,7 +40,7 @@ public class GfMapBuilder extends SVGbuilder {
         margin = xUnit * 0.5f;
         
         //
-		patterns = new Patterns(docElement);
+		patterns = new GfPatternHexes(docElement);
 		
 		// define the offsets for hex of colour C, from the row, column bse
 		for (HexColour colour : HexColour.values()) {

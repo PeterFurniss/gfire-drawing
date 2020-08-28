@@ -1,4 +1,4 @@
-package uk.co.furniss.draw.dom;
+package uk.co.furniss.draw.gfmap;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -7,9 +7,13 @@ import java.util.List;
 
 import org.w3c.dom.Element;
 
-public class DomStandarise {
+import uk.co.furniss.draw.dom.SVGmangler;
+import uk.co.furniss.draw.dom.XPathUtil;
+import uk.co.furniss.draw.dom.XmlUtil;
 
-	private DomStandarise() {
+public class DomProgressiveTweaking {
+
+	private DomProgressiveTweaking() {
 		
 	}
 

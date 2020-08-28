@@ -1,4 +1,4 @@
-package uk.co.furniss.draw.dom;
+package uk.co.furniss.draw.gfmap;
 
 import java.util.ArrayList;
 import java.util.List;
