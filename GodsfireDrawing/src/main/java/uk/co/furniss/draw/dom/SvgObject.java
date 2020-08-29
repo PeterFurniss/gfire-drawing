@@ -20,11 +20,13 @@ public class SvgObject {
 	private final Element element;
 
 	private final String id;
+	// TBD - temp, until create polymorphs
+	private final boolean isPath;
 
 	public SvgObject (Element originalElement) {
 		this.element = originalElement;
 		this.id = element.getAttribute("id");
-		
+		isPath = element.getLocalName().equals("path");
 		// remove any absolute paths
 		makePathsRelative();
 	}
@@ -37,6 +39,7 @@ public class SvgObject {
 		this.element = (Element) original.element.cloneNode(true);
 		element.setAttribute("id", newId);
 		this.id = newId;
+		isPath = original.isPath;
 	}
 
 	public SvgObject clone(String newId) {
@@ -47,37 +50,65 @@ public class SvgObject {
 	 */
 	public void moveTopLeft() {
 		// can assume it is relative, and we won't worry about curves that come outside the box
-		Map<Element, XYcoords> topleftcorners = new HashMap<>();
 		
-		// this will need to work for all types
-		List<Element> pathElements = getPaths();
-		// this doesn't work for multiple objects
-		for (Element pathElement : pathElements) {
-			topleftcorners.put(pathElement, topLeftOfPath(pathElement));
-		}
-		// which is the topleft most
-		XYcoords tl = topleftcorners.values().stream().reduce(XYcoords.MAXIMUM, (sofar, xy) -> sofar.topLeftMost(xy));
-		
-		// and apply
-		for (Element pathElement : pathElements) {
-			rebase(pathElement, tl);
+		if (isPath) {
+			XYcoords tl = topLeftOfPath(element);
+			setFirstStep(element, tl.minus());
+		} else {
+    		Map<Element, XYcoords> topleftcorners = new HashMap<>();
+    		List<Element> pathElements = getPaths();
+    		// find all their top left mosts
+    		for (Element pathElement : pathElements) {
+    			topleftcorners.put(pathElement, topLeftOfPath(pathElement));
+    		}
+    		// for x and y separately, find the one that goes farthest "back" from starting point 
+    		float furthestX = 0.0f;
+    		Element bestX = null;
+    		float furthestY = 0.0f;
+    		Element bestY = null;
+    		for (Map.Entry<Element, XYcoords> elem : topleftcorners.entrySet()) {
+				Element which = elem.getKey();
+				XYcoords where = elem.getValue();
+				if (where.getX() < furthestX) {
+					furthestX = where.getX();
+					bestX = which;
+				}
+				if (where.getY() < furthestY) {
+					furthestY = where.getY();
+					bestY = which;
+				}
+			}
+    		// in each dimension, the best will be reset to minus the furthest
+    		// others are offset by the difference between their start and the best's start
+    		float offsetX = -furthestX - getFirstStep(bestX).getX();
+    		float offsetY = -furthestY - getFirstStep(bestY).getY();
+    		XYcoords offset = new XYcoords(offsetX, offsetY);
+    		for (Element element : pathElements) {
+    			XYcoords first = getFirstStep(element);
+				setFirstStep(element, offset.add(first));
+			}
 		}
 	}
 	
 	private static final Pattern FIRST_IN_PATH = Pattern.compile("m\\s+(\\S*?,\\S*)(.*)");
-	/**
-	 * move to a new absolute starting point
-	 * @param pathElement
-	 * @param tl
-	 */
-	private void rebase( Element pathElement, XYcoords tl ) {
+	private static final Pattern FIRST_IN_PATH_REPLACE = Pattern.compile("m\\s+\\S*?,\\S*");
+	
+	
+	private void setFirstStep (Element pathElement, XYcoords newStep) {
+		String dString = pathElement.getAttribute("d");
+		Matcher m = FIRST_IN_PATH_REPLACE.matcher(dString);
+		String newD = m.replaceFirst("m " + newStep.toString());
+//		System.out.println("Changing \n  " + dString + "\nto\n  " + newD);
+		pathElement.setAttribute("d", newD);
+	}
+
+	private XYcoords getFirstStep (Element pathElement) {
 		String dString = pathElement.getAttribute("d");
 		Matcher m = FIRST_IN_PATH.matcher(dString);
 		if (m.matches()) {
-			XYcoords old = new XYcoords(m.group(1));
-			String newD = "m " + tl.minus() + m.group(2);
-//			System.out.println("changing\n" + dString + "\n" + newD);
-			pathElement.setAttribute("d",  newD);
+			return new XYcoords(m.group(1));
+		} else {
+			throw new IllegalStateException("Can't find first path step in " + dString + " from a " + pathElement.getLocalName());
 		}
 	}
 
@@ -297,7 +328,7 @@ public class SvgObject {
 
 	private List<Element> getPaths() {
 		List<Element> pathElements;
-		if (element.getLocalName().equals("path")) {
+		if (isPath) {
 			pathElements = Collections.singletonList(element);
 		} else {
 			pathElements = XPU.findElements(element,  "path");

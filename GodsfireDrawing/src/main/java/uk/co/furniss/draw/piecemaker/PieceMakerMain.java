@@ -31,7 +31,7 @@ public class PieceMakerMain {
 		String specName = "piece_spec";
 		String silhouName = "new_piecest";
 		String outName = "madePieces";
-
+		boolean testing = false;
 		
 		String specFile = directory + specName + specSuffix;
 		System.out.println("Will read specification file " + specFile);
@@ -60,17 +60,18 @@ public class PieceMakerMain {
 			if (image == null) {
 				throw new IllegalArgumentException("Cannot find image " + spec.get(0) + " in image file");
 			}
-			SvgObject template = image.clone(originalId + PiecesDocument.TEMPLATE_SUFFIX );
-			// if testing move
-			//   image.moveTopLeft
-			// otherwise these
-			template.moveTopLeft();
-			piecesDoc.addDefObject(template);
-			
-			piecesDoc.addCloneOfTemplate(outputLayer, originalId, x, y);
-			x += 15.0f;
-			y += 20.0f;
-			
+			if (testing) {
+			    image.moveTopLeft();
+			} else {
+    			SvgObject template = image.clone(originalId + PiecesDocument.TEMPLATE_SUFFIX );
+
+    			template.moveTopLeft();
+    			piecesDoc.addDefObject(template);
+    			
+    			piecesDoc.addCloneOfTemplate(outputLayer, originalId, x, y);
+    			x += 15.0f;
+    			y += 20.0f;
+			}
 		}
 
 		piecesDoc.writeToFile(directory + outName + svgSuffix);
