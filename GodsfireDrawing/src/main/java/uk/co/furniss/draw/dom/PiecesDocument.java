@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 /**
  * the xml document that starts as the image library (possibly containing other layers)
@@ -51,6 +50,23 @@ public class PiecesDocument {
 		}
 	}
 
+	public String ensureTemplate(String name) {
+		String templateName = name + TEMPLATE_SUFFIX;
+		if (! defObjects.containsKey(name)) {
+	
+    		SvgObject obj = SVGmangler.getSvgObject(libraryLayer, name);
+    		if (obj == null) {
+    			throw new IllegalArgumentException("Cannot find object " + name + " in image file");
+    		}
+    
+    		SvgObject template = obj.clone(templateName );
+    		template.moveTopLeft();
+    		addDefObject(template);
+    		defObjects.put(name, template);
+		}
+		return templateName;
+	}
+	
 	public SvgObject findSvgObject(String name) {
 		if (defObjects.containsKey(name)) {
 			return defObjects.get(name);
@@ -99,10 +115,36 @@ public class PiecesDocument {
 		return layer;
 	}
 	
-	public Element addCloneOfTemplate(Element layer, String name, float dx, float dy) {
-		Element clone = svg.createTranslatedClone(name + TEMPLATE_SUFFIX, dx, dy);
+	public void hideAllLayersButOne(String layerName) {
+		List<Element> layers = SVGmangler.getLayerElements(svgDoc);
+		for (Element layer : layers) {
+			final String displayStyle;
+			if (layer.getAttribute("inkscape:label").equals(layerName)) {
+				displayStyle = "display:inline";
+			} else {
+				displayStyle = "display:none";
+			}
+			layer.setAttribute("style", displayStyle);
+		}
+	}
+	
+	public Element addCloneOfTemplate(Element layer, String templateName, float dx, float dy) {
+		Element clone = svg.createTranslatedClone(templateName, dx, dy);
 		layer.appendChild(clone);
 		return clone;
 	}
+
+	public void drawLine( Element outputLayer, XYcoords start, XYcoords end ) {
+		Element line = svg.createElement("line");
+		line.setAttribute("x1", Float.toString(start.getX()));
+		line.setAttribute("x2", Float.toString(end.getX()));
+		line.setAttribute("y1", Float.toString(start.getY()));
+		line.setAttribute("y2", Float.toString(end.getY()));
+		line.setAttribute("stroke", "black");
+		line.setAttribute("stroke-width", "0.1");
+		outputLayer.appendChild(line);
+	}
+	
+
 
 }

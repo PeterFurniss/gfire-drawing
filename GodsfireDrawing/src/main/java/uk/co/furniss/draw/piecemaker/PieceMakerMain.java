@@ -8,6 +8,7 @@ import org.w3c.dom.Element;
 
 import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.SvgObject;
+import uk.co.furniss.draw.dom.XYcoords;
 import uk.co.furniss.xlsx.ExcelBook;
 
 /**
@@ -52,28 +53,55 @@ public class PieceMakerMain {
 
 		// find the images, copy the element, move to top left and put it in the defs
 		// and add a clone to the output layer
-		float x = 20.0f;
-		float y = 20.0f;
+		int row = 0;
+		int col = 0;
+		float pieceSize = 20.0f;
+		float imageX = pieceSize / 2.0f;
+		float imageY = pieceSize / 2.0f;
+		float pieceSpacing = pieceSize;  // can add gap
+
+		float margin = 10.0f;
+		int colsPerRow = (int) ((210.0f - 2 * margin) / pieceSize) - 1;
+		
 		for (List<String> spec : specs) {
 			String originalId = spec.get(0);
-			SvgObject image = piecesDoc.findSvgObject(originalId);
-			if (image == null) {
-				throw new IllegalArgumentException("Cannot find image " + spec.get(0) + " in image file");
-			}
 			if (testing) {
+				SvgObject image = piecesDoc.findSvgObject(originalId);
+    			if (image == null) {
+    				throw new IllegalArgumentException("Cannot find image " + spec.get(0) + " in image file");
+    			}
 			    image.moveTopLeft();
 			} else {
-    			SvgObject template = image.clone(originalId + PiecesDocument.TEMPLATE_SUFFIX );
+				String templateName = piecesDoc.ensureTemplate(originalId);
+    			float x = margin + col * pieceSpacing + imageX;
+    			float y = margin + row * pieceSpacing + imageY;
+				
+    			piecesDoc.addCloneOfTemplate(outputLayer, templateName, x, y);
 
-    			template.moveTopLeft();
-    			piecesDoc.addDefObject(template);
-    			
-    			piecesDoc.addCloneOfTemplate(outputLayer, originalId, x, y);
-    			x += 15.0f;
-    			y += 20.0f;
+    			col++;
+    			if (col > colsPerRow) {
+    				row++;
+    				col = 0;
+    			}
 			}
 		}
-
+		// now some lines round the pieces
+		float x1 = margin;
+		float x2 = x1 + ( colsPerRow + 1) * pieceSpacing;
+		for (int r = 0; r < row + 2; r++) {
+			float y = margin + r * pieceSpacing;
+			piecesDoc.drawLine(outputLayer, new XYcoords(x1, y), new XYcoords(x2, y));
+			
+		}
+		float y1 = margin;
+		float y2 = x1 + ( row + 1) * pieceSpacing;
+		for (int c = 0; c < colsPerRow + 2; c++) {
+			float x = margin + c * pieceSpacing;
+			piecesDoc.drawLine(outputLayer, new XYcoords(x, y1), new XYcoords(x, y2));
+			
+		}
+		
+		piecesDoc.hideAllLayersButOne("output");
 		piecesDoc.writeToFile(directory + outName + svgSuffix);
         
 	}
