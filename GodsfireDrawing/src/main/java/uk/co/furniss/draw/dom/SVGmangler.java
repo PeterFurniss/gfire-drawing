@@ -46,7 +46,7 @@ public class SVGmangler  {
 		System.out.println("Looking in " + topElement.getAttribute("id") + " for " + name);
 		Element xmlElement = XPU.findElement(topElement, ".//*[@id='" + name + "']");
 		if (xmlElement != null) {
-			return new SvgObject(xmlElement);
+			return SvgObject.makeSvgObject(xmlElement);
 		}
 		throw new IllegalStateException("Cannot find svg object " + name);
 	}

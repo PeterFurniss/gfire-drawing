@@ -60,7 +60,7 @@ public class PiecesDocument {
     		}
     
     		SvgObject template = obj.clone(templateName );
-    		template.moveTopLeft();
+    		template.setCentre(XYcoords.ORIGIN);
     		addDefObject(template);
     		defObjects.put(name, template);
 		}

@@ -45,7 +45,7 @@ public class XYcoords {
 		return new XYcoords(x - other.x, y - other.y);
 	}
 	
-	public XYcoords maximal(XYcoords other) {
+	public XYcoords bottomRightMost(XYcoords other) {
 		return new XYcoords( x > other.x ? x : other.x,  y > other.y ? y : other.y);
 		
 	}
@@ -54,11 +54,12 @@ public class XYcoords {
 		return new XYcoords( x < other.x ? x : other.x,  y < other.y ? y : other.y);
 	}
 	
+	// this is degenerate - should use SvgPath at least
 	public static XYcoords maxXY( List<XYcoords> list) {
 		// could stream this, presumably
 		XYcoords soFar = list.get(0);
 		for (XYcoords one : list) {
-			soFar = soFar.maximal(one);
+			soFar = soFar.bottomRightMost(one);
 		}
 		return soFar;
 	}
@@ -71,5 +72,6 @@ public class XYcoords {
 	public String tabbed() {
 		return x + "\t" + y;
 	}
+
 	
 }

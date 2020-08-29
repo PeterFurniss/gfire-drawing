@@ -70,7 +70,7 @@ public class PieceMakerMain {
     			if (image == null) {
     				throw new IllegalArgumentException("Cannot find image " + spec.get(0) + " in image file");
     			}
-			    image.moveTopLeft();
+			    image.setCentre(XYcoords.ORIGIN);
 			} else {
 				String templateName = piecesDoc.ensureTemplate(originalId);
     			float x = margin + col * pieceSpacing + imageX;
@@ -101,7 +101,9 @@ public class PieceMakerMain {
 			
 		}
 		
-		piecesDoc.hideAllLayersButOne("output");
+		if (! testing) {
+			piecesDoc.hideAllLayersButOne("output");
+		}
 		piecesDoc.writeToFile(directory + outName + svgSuffix);
         
 	}
