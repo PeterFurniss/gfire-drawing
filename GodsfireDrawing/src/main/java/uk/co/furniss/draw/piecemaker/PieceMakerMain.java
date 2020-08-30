@@ -8,6 +8,7 @@ import org.w3c.dom.Element;
 
 import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.SvgObject;
+import uk.co.furniss.draw.dom.SvgRect;
 import uk.co.furniss.draw.dom.XYcoords;
 import uk.co.furniss.xlsx.ExcelBook;
 
@@ -55,10 +56,12 @@ public class PieceMakerMain {
 		// and add a clone to the output layer
 		int row = 0;
 		int col = 0;
-		float pieceSize = 20.0f;
-		float imageX = pieceSize / 2.0f;
-		float imageY = pieceSize / 2.0f;
+		float pieceSize = 19.0f;
+		float centreX = pieceSize / 2.0f;
+		float centreY = pieceSize / 2.0f;
 		float pieceSpacing = pieceSize;  // can add gap
+		
+		float cornerTextOffset = pieceSize / 3.0f ;
 
 		float margin = 10.0f;
 		int colsPerRow = (int) ((210.0f - 2 * margin) / pieceSize) - 1;
@@ -73,11 +76,12 @@ public class PieceMakerMain {
 			    image.setCentre(XYcoords.ORIGIN);
 			} else {
 				String templateName = piecesDoc.ensureTemplate(originalId);
-    			float x = margin + col * pieceSpacing + imageX;
-    			float y = margin + row * pieceSpacing + imageY;
-				
-    			piecesDoc.addCloneOfTemplate(outputLayer, templateName, x, y);
+    			float x = margin + col * pieceSpacing ;
+    			float y = margin + row * pieceSpacing ;
+				SvgRect background = piecesDoc.makeRectangle(outputLayer, x, y, pieceSize, pieceSize, "yellow");
+    			piecesDoc.addCloneOfTemplate(outputLayer, templateName, x + centreX, y+ centreY);
 
+    			
     			col++;
     			if (col > colsPerRow) {
     				row++;
