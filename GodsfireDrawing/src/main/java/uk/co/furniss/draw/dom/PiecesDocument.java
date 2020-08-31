@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
 /**
  * the xml document that starts as the image library (possibly containing other layers)
@@ -23,6 +24,7 @@ public class PiecesDocument {
 	private Element defs;
 	private static final XPathUtil XPU = XPathUtil.getSVG();
 	public static final String TEMPLATE_SUFFIX = "_template";
+
 
 	public PiecesDocument(String inputFile) {
 		
@@ -61,6 +63,7 @@ public class PiecesDocument {
     
     		SvgObject template = obj.clone(templateName );
     		template.setCentre(XYcoords.ORIGIN);
+    		template.openStyle();
     		addDefObject(template);
     		defObjects.put(name, template);
 		}
@@ -155,7 +158,33 @@ public class PiecesDocument {
 		line.setAttribute("stroke-width", "0.1");
 		outputLayer.appendChild(line);
 	}
+
+	public void addText( Element parent, String text, float size, float  x, float y, boolean bold, String colour ) {
+		Element textElement = svg.createElement("text");
+		textElement.setAttribute("font-size", Float.toString(size) + "px");
+		textElement.setAttribute("fill", colour);
+		if (text.equals("star")) {
+    		textElement.appendChild(svg.createText("«"));
+    		textElement.setAttribute("font-family", "wingdings");
+		} else if (text.equals("blob")) {
+    		textElement.appendChild(svg.createText("="));
+    		textElement.setAttribute("font-family", "webdings");
+    	} else {
+    		textElement.appendChild(svg.createText(text));
+    		if (bold) {
+    			textElement.setAttribute("font-weight", "bold");
+    		}
+    	}
+		// x, y apply to the centre of the text
+		textElement.setAttribute("text-anchor", "middle");
+		textElement.setAttribute("dominant-baseline", "middle");
+		textElement.setAttribute("x", Float.toString(x));
+		textElement.setAttribute("y", Float.toString(y));
+
+		parent.appendChild(textElement);
+		
+	}
 	
 
-
+	
 }

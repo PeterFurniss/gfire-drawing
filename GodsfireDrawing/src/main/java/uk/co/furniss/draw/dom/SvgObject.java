@@ -372,4 +372,9 @@ public abstract class SvgObject {
 	public String getId() {
 		return id;
 	}
+
+	public void openStyle() {
+		element.setAttribute("style", "fill-rule:evenodd");
+		
+	}
 }

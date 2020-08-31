@@ -5,7 +5,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
@@ -77,37 +80,62 @@ public class ExcelBook {
 		return aSheet;
 	}
 
-	public List<List<String>> readCellsAsStrings( String sheetName, List<String> expectedHeader ) {
+	public List<Map<String, String>> readCellsAsStrings( String sheetName, List<String> expectedHeader ) {
 		Sheet aSheet = getSheet(sheetName);
 		boolean firstRow = true;
-		List<List<String>> rows = new ArrayList<>();
+		List<Map<String, String>> rows = new ArrayList<>();
+		List<String> colNames = new ArrayList<>();
 		for (Row row : aSheet) {
-			List<String> line = new ArrayList<>();
+			Map<String, String> line = new HashMap<>();
+			Iterator<String> header = expectedHeader.iterator();
 			for (Cell cell : row) {
-				switch (cell.getCellType()) {
-				case STRING:
-					line.add(cell.getStringCellValue());
-					break;
-				case BOOLEAN:
-					line.add(Boolean.toString(cell.getBooleanCellValue()));
-					break;
-				case NUMERIC:
-					line.add(Integer.toString((int) cell.getNumericCellValue()));
-					break;
-				case BLANK:
-					line.add("");
-					break;
-				default:
-					System.out.print("Unrecognised cell type " + cell.getCellType());
-					break;
+				if (header.hasNext()) {
+					String colName = header.next();
+					if (firstRow) {
+						if (!colName.equals(cell.getStringCellValue())) {
+							throw new IllegalArgumentException("Mismatched header line, expected " + colName 
+									+ " but was " + cell.getStringCellValue());
+						}
+					} else {
+						switch (cell.getCellType()) {
+						case STRING:
+							line.put(colName, cell.getStringCellValue());
+							break;
+						case BOOLEAN:
+							line.put(colName, Boolean.toString(cell.getBooleanCellValue()));
+							break;
+						case NUMERIC:
+							line.put(colName, Integer.toString((int) cell.getNumericCellValue()));
+							break;
+						case BLANK:
+							line.put(colName, "");
+							break;
+						case FORMULA:
+							line.put(colName, cell.getStringCellValue());
+							break;
+						default:
+							System.out.print("Unrecognised cell type " + cell.getCellType());
+							break;
+						}
+					}
+				} else {
+					// extra cell in the row
+					if (firstRow) {
+						// this is wrong - probably
+						throw new IllegalArgumentException("Extra header(s) " + cell.getStringCellValue());
+
+					}
 				}
 			}
+
 			if (firstRow) {
-				if (!line.equals(expectedHeader)) {
-					throw new IllegalArgumentException("Mismatched header line " + line);
-				}
 				firstRow = false;
 			} else {
+				// fill in any trailing empty columns
+				while (header.hasNext()) {
+					line.put(header.next(), "");
+				}
+			
 				rows.add(line);
 			}
 

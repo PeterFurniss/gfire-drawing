@@ -11,6 +11,7 @@ import javax.xml.XMLConstants;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Text;
 
 //manages a developing svg document - sub-classes are GfMapBuilder and SVGdocument
 public class SVGbuilder {
@@ -122,6 +123,11 @@ public class SVGbuilder {
 	public void addComment( String string ) {
 		Comment comment = parentDocument.createComment("\n    " + string + "\n");
 		svgDoc.appendChild(comment);
+	}
+	
+	public Text createText(String content) {
+		return parentDocument.createTextNode(content);
+		
 	}
 
 	protected String coordinate( float xx ) {

@@ -43,7 +43,7 @@ public class SVGmangler  {
 	}
 
 	public static SvgObject getSvgObject(Element topElement, String name) {
-		System.out.println("Looking in " + topElement.getAttribute("id") + " for " + name);
+//		System.out.println("Looking in " + topElement.getAttribute("id") + " for " + name);
 		Element xmlElement = XPU.findElement(topElement, ".//*[@id='" + name + "']");
 		if (xmlElement != null) {
 			return SvgObject.makeSvgObject(xmlElement);
