@@ -45,7 +45,7 @@ public class PieceMakerMain {
 		System.out.println("Will read specification file " + specFile);
 		ExcelBook tbook = new ExcelBook(specFile);
 
-		List<Map<String, String>> specs = tbook.readCellsAsStrings("double", Arrays.asList("image", "number", "topleft", "topright",
+		List<Map<String, String>> specs = tbook.readCellsAsStrings("all", Arrays.asList("image", "number", "topleft", "topright",
 				"botleft", "botright", "firstId", "back", "fore", "lines"));
 
 		String silhouFile = directory + silhouName + svgSuffix;
@@ -134,6 +134,7 @@ public class PieceMakerMain {
         			if (spec.get("lines").equalsIgnoreCase("true")) {
         				pic.setAttribute("stroke", foreColour);
         				pic.setAttribute("stroke-width", "0.45px");
+        				pic.setAttribute("stroke-linejoin", "round");
         				pic.setAttribute("fill", "none");
         			} else {
         				pic.setAttribute("fill", foreColour);
