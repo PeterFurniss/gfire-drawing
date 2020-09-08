@@ -27,6 +27,46 @@ public class SvgRect extends SvgObject {
 		this.height = original.height;
 	}
 
+	
+//	@Override
+//	public void applyTransform(XYcoords base, Transform trans) {
+//		XYcoords newTL = trans.apply(getTopLeft());
+//		XYcoords newBR = trans.apply(getBottomRight());
+//		x = newTL.getX();
+//		y = newTL.getY();
+//		width = newBR.getX() - x;
+//		height = newBR.getY() - y;
+//		setXY();
+//		setWH();
+//	}
+
+	@Override
+	public void scale(Transform trans) {
+		width = trans.scale(width);
+		height = trans.scale(height);
+		setWH();
+	}
+	
+	@Override
+	public void scaleTo( XYcoords base, Transform trans ) {
+		XYcoords newXY = trans.scaleTo(base, getTopLeft());
+		setXY(newXY);
+		XYcoords newSize = trans.scale(new XYcoords(width, height));
+		setWH(newSize);
+	}
+
+	@Override
+	public void translate(Transform trans) {
+		XYcoords newXY = trans.translate(getTopLeft());
+		setXY(newXY);
+	}
+
+	public void setXY( XYcoords newXY ) {
+		x = newXY.getX();
+		y = newXY.getY();
+		setXY();
+	}
+	
 	@Override
 	public SvgObject clone(String newId ) {
 		return new SvgRect(this, newId);
@@ -42,19 +82,23 @@ public class SvgRect extends SvgObject {
 		return new XYcoords(x + width, y + height);
 	}
 
-	@Override
-	public void setTopLeft( XYcoords absoluteTopLeft ) {
-		 x = absoluteTopLeft.getX();
-		 y = absoluteTopLeft.getY();
-		 setXY();
-
-	}
 
 	public void setXY() {
 		element.setAttribute("x", Float.toString(x));
 		element.setAttribute("y", Float.toString(y));
 	}
 
+	public void setWH() {
+		element.setAttribute("width", Float.toString(width));
+		element.setAttribute("height", Float.toString(height));
+	}
+
+	public void setWH(XYcoords size) {
+		width  = size.getX();
+		height = size.getY();
+		setWH();
+	}
+	
 	@Override
 	public void move( XYcoords movement ) {
 		 x += movement.getX();

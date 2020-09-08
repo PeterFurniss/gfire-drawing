@@ -48,7 +48,7 @@ public class SVGmangler  {
 		if (xmlElement != null) {
 			return SvgObject.makeSvgObject(xmlElement);
 		}
-		throw new IllegalStateException("Cannot find svg object " + name);
+		throw new IllegalStateException("Cannot find svg object " + name + ".");
 	}
 
 	/**

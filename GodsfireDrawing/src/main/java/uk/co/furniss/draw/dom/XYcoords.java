@@ -73,5 +73,22 @@ public class XYcoords {
 		return x + "\t" + y;
 	}
 
+	public XYcoords meanWith( XYcoords o ) {
+		return new XYcoords( (x + o.x) / 2, (y + o.y) / 2);
+	}
+
+	public XYcoords scaleTo(XYcoords base, float factor) {
+		return scaleTo(base, factor, factor);
+	}
+	public XYcoords scaleTo(XYcoords base, float xFactor, float yFactor) {
+		return subtract(base).scale(xFactor,  yFactor).add(base);
+	}
+
+	public XYcoords scale(float xFactor, float yFactor) {
+		return new XYcoords(x * xFactor, y * yFactor);
+	}
 	
+	public XYcoords scale(float factor) {
+		return scale(factor, factor);
+	}
 }

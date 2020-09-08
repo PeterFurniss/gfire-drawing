@@ -1,76 +1,313 @@
 package uk.co.furniss.draw.dom;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
-
 
 public class SvgPath extends SvgObject {
 
 	private XYcoords bottomRightOffset = null;
 	private XYcoords topLeftOffset = null;
-	
-	public SvgPath (Element element) {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(SvgPath.class.getName());
+
+	public SvgPath(Element element) {
 		super(element);
 		// remove any absolute paths
+		LOGGER.trace("constructing for path {}", element.getAttribute("id"));
 		makePathsRelative();
+		unscale();
 	}
-	
+
 	private SvgPath(Element original, String newId) {
 		super(original, newId, true);
 	}
-	
+
 	@Override
 	public SvgObject clone( String newId ) {
 		return new SvgPath(getElement(), newId);
 	}
 
-	@Override
-	public void setTopLeft(XYcoords absoluteTopLeft) {
-		ensureOffsets();
-		XYcoords tl = topLeftOffset;
-		setStart(absoluteTopLeft.subtract(tl));
+	private void unscale() {
+		String tformAttr = element.getAttribute("transform");
+		if (tformAttr.startsWith("scale")) {
+			LOGGER.debug("applying and removing path {} scale of {}", getId(), tformAttr);
+			Transform tform = new Transform(tformAttr);
+			scale(tform);
+			element.removeAttribute("transform");
+		}
 	}
-	
 	
 	private static final Pattern FIRST_IN_PATH = Pattern.compile("m\\s+(\\S*?,\\S*)(.*)");
 	private static final Pattern FIRST_IN_PATH_REPLACE = Pattern.compile("m\\s+\\S*?,\\S*");
-	
-	
-	void setStart (XYcoords newStart) {
+
+	void setStart( XYcoords newStart ) {
 		String dString = element.getAttribute("d");
 		Matcher m = FIRST_IN_PATH_REPLACE.matcher(dString);
 		String newD = m.replaceFirst("m " + newStart.toString());
-//		System.out.println("Changing \n  " + dString + "\nto\n  " + newD);
+		LOGGER.trace("changing d from \n{}\nto\n{}", dString, newD);
+		// System.out.println("Changing \n " + dString + "\nto\n " + newD);
 		element.setAttribute("d", newD);
 	}
 
 	@Override
-	public void move(XYcoords movement) {
+	public void move( XYcoords movement ) {
 		XYcoords oldStart = getStart();
-		setStart(oldStart.add(movement));
+		XYcoords newStart = oldStart.add(movement);
+		LOGGER.trace("moving from {} to {}", oldStart, newStart);
+		setStart(newStart);
 	}
+
 	
+	
+//	@Override
+//	public void applyTransform( XYcoords base, Transform trans ) {
+//		LOGGER.debug("applyTransform with base {}", base);
+//
+//		if (trans.isScaling()) {
+//			scaleTo(base, trans);
+//		}
+//		translate(trans);
+//		Dattribute dAsReceived = new Dattribute();
+//		LOGGER.debug("pre trans {}", dAsReceived);
+//		Dbuilder dRelative = new Dbuilder();
+//		String cmd = dAsReceived.next();
+//		if (!cmd.equalsIgnoreCase("m")) {
+//			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
+//		}
+//		dRelative.add(cmd.toLowerCase());
+//		while (dAsReceived.hasNext()) {
+//			String next = dAsReceived.next();
+//			if (next.matches("[A-Za-z]")) {
+//				// its a command
+//				cmd = next;
+//				dRelative.add(cmd.toLowerCase());
+//			} else {
+//				// it wasn't a command, so go back one to make the next next() give the same
+//				// thing
+//				dAsReceived.backOne();
+//			}
+//			XYcoords point;
+//			if (cmd.equals(cmd.toLowerCase())) {
+//				switch (cmd) {
+//				case "m": // relative move
+//					cmd = "l"; // move is only for one segment
+//				case "l": // relative line
+//				case "t": // shortcut quadratic
+//					dRelative.add(trans.apply(dAsReceived.nextPair()));
+//					break;
+//				case "h": // relative horizontal
+//					point = new XYcoords(dAsReceived.nextValue(), 0.0f);
+//					dRelative.add(trans.apply(point).getX());
+//					break;
+//				case "v":
+//					point = new XYcoords(0.0f, dAsReceived.nextValue());
+//					dRelative.add(trans.apply(point).getY());
+//					break;
+//				case "z":
+//					// reset where we are
+//					break;
+//				case "c": // relative bezier - 3 xy pairs, last is next node
+//					dRelative.add(trans.apply(dAsReceived.nextPair()));
+//					dRelative.add(trans.apply(dAsReceived.nextPair()));
+//					dRelative.add(trans.apply(dAsReceived.nextPair()));
+//					break;
+//				case "s": // shortcut bezier - 2 xy pairs
+//				case "q": // quadratic
+//					dRelative.add(trans.apply(dAsReceived.nextPair()));
+//					dRelative.add(trans.apply(dAsReceived.nextPair()));
+//					break;
+//
+//				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
+//				          // destinatioin (x,y)
+//					// i think this probably requires proportionality
+//					dRelative.add(trans.apply(dAsReceived.nextPair()));
+//					dRelative.copy(dAsReceived, 3);
+//					dRelative.add(trans.apply(dAsReceived.nextPair()));
+//					break;
+//				default:
+//					throw new IllegalStateException(
+//					        "unsupported relative path command " + cmd + " from " + dAsReceived);
+//				}
+//			}
+//		}
+//		LOGGER.debug("after trans {}", dRelative.getD());
+//		element.setAttribute("d", dRelative.getD());
+//		}
+//		
+//		if (trans.isTranslating()) {
+//			translate(trans);
+//		}
+//	}
+
+	@Override
+	public void translate( Transform trans ) {
+		setStart(trans.translate(getStart()));
+	}
+
+	@Override
+	public void scaleTo(XYcoords base, Transform trans ) {
+
+		Dattribute dIn = new Dattribute();
+		LOGGER.debug("pre scaling to {}, d={}", base, dIn);
+		Dbuilder dOut = new Dbuilder();
+		String cmd = dIn.next();
+		if (!cmd.equalsIgnoreCase("m")) {
+			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
+		}
+		dOut.add(cmd.toLowerCase());
+		// first one is the only absolute
+		if (base != null) {
+			XYcoords start = dIn.nextPair();
+			XYcoords scaledStart = trans.scaleTo(base, start);
+			dOut.add(scaledStart);
+		}
+		while (dIn.hasNext()) {
+			String next = dIn.next();
+			if (next.matches("[A-Za-z]")) {
+				// its a command
+				cmd = next;
+				dOut.add(cmd.toLowerCase());
+			} else {
+				// it wasn't a command, so go back one to make the next next() give the same
+				// thing
+				dIn.backOne();
+			}
+			XYcoords point;
+			if (cmd.equals(cmd.toLowerCase())) {
+				switch (cmd) {
+				case "m": // relative move
+					cmd = "l"; // move is only for one segment
+				case "l": // relative line
+				case "t": // shortcut quadratic
+					dOut.add(trans.scale(dIn.nextPair()));
+					break;
+				case "h": // relative horizontal
+				case "v":
+					dOut.add(trans.scale(dIn.nextValue()));
+					break;
+				case "z":
+					break;
+				case "c": // relative bezier - 3 xy pairs, last is next node
+					dOut.add(trans.scale(dIn.nextPair()));
+					dOut.add(trans.scale(dIn.nextPair()));
+					dOut.add(trans.scale(dIn.nextPair()));
+					break;
+				case "s": // shortcut bezier - 2 xy pairs
+				case "q": // quadratic
+					dOut.add(trans.scale(dIn.nextPair()));
+					dOut.add(trans.scale(dIn.nextPair()));
+					break;
+
+				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
+				          // destinatioin (x,y)
+					// i think this probably requires proportionality
+					dOut.add(trans.scale(dIn.nextPair()));
+					dOut.copy(dIn, 3);
+					dOut.add(trans.scale(dIn.nextPair()));
+					break;
+				default:
+					throw new IllegalStateException(
+					        "unsupported relative path command " + cmd + " from " + dIn);
+				}
+			}
+		}
+		LOGGER.debug("   {} after scaling {}", getId(), dOut.getD());
+		LOGGER.debug("   {} centre is now {}", getId(), getCentre());
+		element.setAttribute("d", dOut.getD());
+		LOGGER.debug("   {} centre is now {}", getId(), getCentre());
+	}
+
+	
+	@Override
+	public void scale( Transform trans ) {
+		scaleTo(null, trans);
+//		Dattribute dAsReceived = new Dattribute();
+//		LOGGER.debug("pre scaling {}", dAsReceived);
+//		Dbuilder dRelative = new Dbuilder();
+//		String cmd = dAsReceived.next();
+//		if (!cmd.equalsIgnoreCase("m")) {
+//			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
+//		}
+//		dRelative.add(cmd.toLowerCase());
+//		// just copy the initial absolute move ( but treat as pair 
+////		dRelative.add(dAsReceived.nextPair());
+//		while (dAsReceived.hasNext()) {
+//			String next = dAsReceived.next();
+//			if (next.matches("[A-Za-z]")) {
+//				// its a command
+//				cmd = next;
+//				dRelative.add(cmd.toLowerCase());
+//			} else {
+//				// it wasn't a command, so go back one to make the next next() give the same
+//				// thing
+//				dAsReceived.backOne();
+//			}
+//			XYcoords point;
+//			if (cmd.equals(cmd.toLowerCase())) {
+//				switch (cmd) {
+//				case "m": // relative move
+//					cmd = "l"; // move is only for one segment
+//				case "l": // relative line
+//				case "t": // shortcut quadratic
+//					dRelative.add(trans.scale(dAsReceived.nextPair()));
+//					break;
+//				case "h": // relative horizontal
+//				case "v":
+//					dRelative.add(trans.scale(dAsReceived.nextValue()));
+//					break;
+//				case "z":
+//					break;
+//				case "c": // relative bezier - 3 xy pairs, last is next node
+//					dRelative.add(trans.scale(dAsReceived.nextPair()));
+//					dRelative.add(trans.scale(dAsReceived.nextPair()));
+//					dRelative.add(trans.scale(dAsReceived.nextPair()));
+//					break;
+//				case "s": // shortcut bezier - 2 xy pairs
+//				case "q": // quadratic
+//					dRelative.add(trans.scale(dAsReceived.nextPair()));
+//					dRelative.add(trans.scale(dAsReceived.nextPair()));
+//					break;
+//
+//				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
+//				          // destinatioin (x,y)
+//					// i think this probably requires proportionality
+//					dRelative.add(trans.scale(dAsReceived.nextPair()));
+//					dRelative.copy(dAsReceived, 3);
+//					dRelative.add(trans.scale(dAsReceived.nextPair()));
+//					break;
+//				default:
+//					throw new IllegalStateException(
+//					        "unsupported relative path command " + cmd + " from " + dAsReceived);
+//				}
+//			}
+//		}
+//		LOGGER.debug("after scaling {}", dRelative.getD());
+//		element.setAttribute("d", dRelative.getD());
+	}
+
 	@Override
 	public XYcoords getTopLeft() {
-		ensureOffsets();
+		calculateOffsetsFromStart();
 		return getStart().add(topLeftOffset);
 	}
-	
-	
+
 	@Override
 	public XYcoords getBottomRight() {
-		ensureOffsets();
+		calculateOffsetsFromStart();
 
 		return getStart().add(bottomRightOffset);
 	}
-	
 
-	private XYcoords getStart () {
+	private XYcoords getStart() {
 		String dString = element.getAttribute("d");
 		Matcher m = FIRST_IN_PATH.matcher(dString);
 		if (m.matches()) {
@@ -82,222 +319,316 @@ public class SvgPath extends SvgObject {
 
 	/**
 	 * get the offset from the start to the top-left of the object
+	 * 
 	 * @param pathElement
 	 * @return
 	 */
-	private void ensureOffsets() {
-		if (topLeftOffset == null) {
-    		String dString = element.getAttribute("d");
-    		// could do this with a hairy regex
-    		String[] pieces = dString.split("\\s+");
-    		XYcoords tl = XYcoords.ORIGIN;
-    		XYcoords br = XYcoords.ORIGIN;
-    		XYcoords currentRelative = XYcoords.ORIGIN;
-    		// first subpath starts at origin in relative
-    		XYcoords pathStart = XYcoords.ORIGIN;
-    		// initialise in case we start with h or v
-    		XYcoords deltaXY = currentRelative;
-    		String cmd = "l"; // after the initial move
-    		for (int i = 2; i < pieces.length; i++) {
-    
-    			String next = pieces[i];
-    			if (next.length() == 1) {
-    				cmd = next;
-    				i++;
-    			}
-    			switch (cmd) {
-    			case "m": // relative move
-    //				pathStart = currentRelative;
-    			case "l": // relative line
-    			case "t": // shortcut quadratic
-    				deltaXY = new XYcoords(pieces[i]);
-    				break;
-    			case "h": // relative horizontal
-    				deltaXY = new XYcoords(Float.parseFloat(pieces[i]), 0.0f);
-    				break;
-    			case "v":
-    				deltaXY = new XYcoords(0.0f, Float.parseFloat(pieces[i]));
-    				break;
-    			case "z":
-    				// step back from the next field - z has no parameters
-    				i--;
-    				// line back to start of subpath
-    				deltaXY =  pathStart.subtract(currentRelative);
-    				break;
-    			case "c": // relative bezier - 3 xy pairs, last is next node
-    				i += 2;
-    				deltaXY = new XYcoords(pieces[i]);
-    				break;
-    			case "s": // shortcut bezier - 2 xy pairs
-    			case "q": // quadratic
-    				deltaXY = new XYcoords(pieces[++i]);
-    				break;
-    
-    			case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
-    			          // destinatioin (x,y)
-    				i += 4;
-    				deltaXY = new XYcoords(pieces[i]);
-    				break;
-    			default:
-    				System.out.println("unsupported relative path command " + cmd);
-    				break;
-    			}
-    			currentRelative = currentRelative.add(deltaXY);
-    			tl = tl.topLeftMost(currentRelative);
-    			br = br.bottomRightMost(currentRelative);
-    			if (cmd.equals("m")) {
-    				// starting a new subpath will reset the destination for z
-    				pathStart = currentRelative;
-    				cmd = "l";
-    			}
-    //			System.out.println(cmd + "\t" + deltaXY.tabbed() + "\t" + currentRelative.tabbed()
-    //				+"\t" + pathStart.tabbed() + "\t" + tl.tabbed() );
-    		}
-    //		System.out.println(tl.toString() + " from " + dString);
-    		topLeftOffset = tl;
-    		bottomRightOffset = br;
+	private void calculateOffsetsFromStart() {
+			// could try to keep these but gets complex
+			String dString = element.getAttribute("d");
+			// could do this with a hairy regex
+			Dattribute pieces = new Dattribute();
+			XYcoords tl = XYcoords.ORIGIN;
+			XYcoords br = XYcoords.ORIGIN;
+			XYcoords currentRelative = XYcoords.ORIGIN;
+			// first subpath starts at origin in relative
+			XYcoords pathStart = XYcoords.ORIGIN;
+			// clear the initial absolute move
+			pieces.next();
+			pieces.nextPair();
+			// initialise in case we start with h or v
+			XYcoords deltaXY = currentRelative;
+			String cmd = "l"; // after the initial move
+			while (pieces.hasNext()) {
+
+				String next = pieces.next();
+				if (next.matches("[a-z]")) {
+					cmd = next;
+				} else {
+					pieces.backOne();
+				}
+				switch (cmd) {
+				case "m": // relative move
+					// pathStart = currentRelative;
+				case "l": // relative line
+				case "t": // shortcut quadratic
+					deltaXY = pieces.nextPair();
+					break;
+				case "h": // relative horizontal
+					deltaXY = new XYcoords(pieces.nextValue(), 0.0f);
+					break;
+				case "v":
+					deltaXY = new XYcoords(0.0f, pieces.nextValue());
+					break;
+				case "z":
+					// line back to start of subpath
+					deltaXY = pathStart.subtract(currentRelative);
+					break;
+				case "c": // relative bezier - 3 xy pairs, last is next node
+					pieces.skip(4);
+					deltaXY = pieces.nextPair();
+					break;
+				case "s": // shortcut bezier - 2 xy pairs
+				case "q": // quadratic
+					pieces.skip(2);
+					deltaXY = pieces.nextPair();
+					break;
+
+				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
+				          // destinatioin (x,y)
+					pieces.skip(5);
+					deltaXY = pieces.nextPair();
+					break;
+				default:
+					throw new IllegalStateException("unsupported relative path command " + cmd + " from " + pieces);
+				}
+				currentRelative = currentRelative.add(deltaXY);
+				LOGGER.trace(cmd + " delta {}  now at {}", deltaXY, currentRelative);
+				tl = tl.topLeftMost(currentRelative);
+				br = br.bottomRightMost(currentRelative);
+				if (cmd.equals("m")) {
+					// starting a new subpath will reset the destination for z
+					pathStart = currentRelative;
+					cmd = "l";
+				}
+				// System.out.println(cmd + "\t" + deltaXY.tabbed() + "\t" +
+				// currentRelative.tabbed()
+				// +"\t" + pathStart.tabbed() + "\t" + tl.tabbed() );
+			}
+			// System.out.println(tl.toString() + " from " + dString);
+			topLeftOffset = tl;
+			bottomRightOffset = br;
+			LOGGER.trace("from start for " + getId()  + ": top left {}, bottom right {}", tl, br);
+
+	}
+
+	private class Dattribute implements Iterator<String> {
+		private final String[] fields;
+		private int posn;
+
+		Dattribute() {
+			String dString = element.getAttribute("d");
+			fields = dString.split(",\\s*|\\s+");
+			posn = 0;
+		}
+
+		public void skip( int skip ) {
+			posn += skip;
+
+		}
+
+		private void backOne() {
+			posn--;
+		}
+
+		private float nextValue() {
+			return Float.parseFloat(next());
+		}
+
+		@Override
+		public String next() {
+			return fields[posn++];
+		}
+
+		@Override
+		public boolean hasNext() {
+			return posn < fields.length;
+		}
+
+		XYcoords nextPair() {
+			return new XYcoords(next(), next());
+		}
+
+		@Override
+		public String toString() {
+			return "Dattribute: at " + posn + " in " + Arrays.toString(fields);
 		}
 	}
-	
 
-	
-	// get the points of the path (not necessarily the bounds in the case of curves
-	private void makePathsRelative() {
-			boolean changed = false;
-    		String dString = element.getAttribute("d");
-    		String [] pieces = dString.split("\\s+");
-    		
-    		List<String> newPieces = new ArrayList<>();
-    		
-    		// this assumes the commands and their parameters are separated by spaces (which is what
-    		// inkscape does. svg allows all sorts of variations
-    		// special case the begining
-    		String cmd = pieces[0];
-    		if (! cmd.equals("m")) {
-    			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
-    		}
-    		newPieces.add(cmd);
-    		XYcoords currentAbsolute = new XYcoords(pieces[1]);
-    		XYcoords start = currentAbsolute;
-    		newPieces.add(pieces[1]);
-    		// default to line after a move 
-    		cmd = "l";
-    		
-    		XYcoords point = new XYcoords(0.0f, 0.0f);
-    		for (int i = 2; i < pieces.length ; i++) {
-    			// what's next ?
-    			String next = pieces[i];
-    			if (next.length() == 1) {
-    				cmd = next;
-    				newPieces.add(cmd.toLowerCase());
-    				i++;
-    			}
-    			if (cmd.equals(cmd.toLowerCase())) {
-         			switch (cmd) {
-        			case "m":  // relative move
-        				cmd = "l";  // move is only for one segment
-        			case "l":  // relative line
-        			case "t":  // shortcut quadratic
-        				point = new XYcoords(pieces[i]);
-        				break;
-        			case "h":  // relative horizontal
-        				point = new XYcoords(Float.parseFloat(pieces[i]), 0.0f);
-        				break;
-        			case "v":
-        				point = new XYcoords(0.0f, Float.parseFloat(pieces[i]));
-        				break;
-        			case "z":
-        				// reset where we are
-        				currentAbsolute = start;
-        				// step back from the next field
-        				i--;
-        				point = new XYcoords(0.0f, 0.0f);
-        				break;
-        			case "c":  // relative bezier - 3 xy pairs, last is next node
-        				newPieces.add(pieces[i++]);
-        				newPieces.add(pieces[i++]);
-        				point =  new XYcoords(pieces[i]);
-        				break;
-        			case "s":  // shortcut bezier - 2 xy pairs
-        			case "q":  // quadratic
-        				newPieces.add(pieces[i++]);
-        				point =  new XYcoords(pieces[i]);
-        				break;
-        				
-        			case "a":  // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _ destinatioin (x,y)
-        				newPieces.add(pieces[i++]);
-        				newPieces.add(pieces[i++]);
-        				newPieces.add(pieces[i++]);
-        				newPieces.add(pieces[i++]);
-        				point = new XYcoords(pieces[i]);
-        				break;
-        			default:
-        				System.out.println("unsupported relative path command " + cmd);
-        				break;
-        			}
-        			if (! cmd.equals("z")) {
-        				newPieces.add(pieces[i]);
-        			}
-        			currentAbsolute = currentAbsolute.add(point);
-    			} else {
-    				changed = true;
-        			switch (cmd) {
-        			case "M":  // absolute move
-        				cmd = "l";  // move is only for one segment
-        			case "L":  // absolute line
-        			case "T":  // shortcut quadratic
-        				point = new XYcoords(pieces[i]).subtract(currentAbsolute);
-        				newPieces.add(point.toString());
-        				break;
-        			case "H":  // absolute horizontal
-        				float relX = Float.parseFloat(pieces[i]) - currentAbsolute.getX();
-						point = new XYcoords(relX ,0.0f);
-						newPieces.add(Float.toString(relX));
-        				break;
-        			case "V":
-        				float relY = Float.parseFloat(pieces[i]) - currentAbsolute.getY();
-						point = new XYcoords(0.0f, relY);
-						newPieces.add(Float.toString(relY));
-        				break;
-        			case "Z":
-        				// reset where we are
-        				currentAbsolute = start;
-        				i--;
-        				point = new XYcoords(0.0f, 0.0f);
-        				break;
-        			case "C":  // absolute bezier - 3 xy pairs, last is next node 
-        				newPieces.add( new XYcoords(pieces[i++]).subtract(currentAbsolute).toString());
-        				newPieces.add( new XYcoords(pieces[i++]).subtract(currentAbsolute).toString());
-        				point =  new XYcoords(pieces[i]).subtract(currentAbsolute);
-        				newPieces.add(point.toString());
-        				break;
-        			case "S":  // shortcut bezier - 2 xy pairs
-        			case "Q":  // quadratic
-        				newPieces.add( new XYcoords(pieces[i++]).subtract(currentAbsolute).toString());
-        				point =  new XYcoords(pieces[i]).subtract(currentAbsolute);
-        				newPieces.add(point.toString());
-        				break;
-        				
-        			case "A":  // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _ destinatioin (x,y)
-        				newPieces.add( new XYcoords(pieces[i++]).subtract(currentAbsolute).toString());
-        				newPieces.add(pieces[i++]);
-        				newPieces.add(pieces[i++]);
-        				newPieces.add(pieces[i++]);
-        				point = new XYcoords(pieces[i]).subtract(currentAbsolute);
-        				newPieces.add(point.toString());
-        				break;
-        			default:
-        				System.out.println("unsupported absolute path command " + cmd);
-        				break;
-        			}
-        			currentAbsolute = currentAbsolute.add(point);
-    			}
-    		}
-    		if (changed) {
-    			element.setAttribute("d", newPieces.stream().collect(Collectors.joining(" ")));
-    		}
-		
+	private class Dbuilder {
+		private final List<String> fields = new ArrayList<>();
+
+		void add( String one ) {
+			fields.add(one);
+		}
+
+		void add( XYcoords xy ) {
+			fields.add(xy.toString());
+		}
+
+		void copy( Dattribute old, int number ) {
+			for (int i = 0; i < number; i++) {
+				fields.add(old.next());
+			}
+		}
+
+		String getD() {
+			return fields.stream().collect(Collectors.joining(" "));
+		}
+
+		public void add( float x ) {
+			add(Float.toString(x));
+		}
+
 	}
 
+	// get the points of the path (not necessarily the bounds in the case of curves
+	private void makePathsRelative() {
+		boolean changed = false;
+		Dattribute dAsReceived = new Dattribute();
+
+		Dbuilder dRelative = new Dbuilder();
+//		LOGGER.debug("d as received {} ", dAsReceived);
+		// this assumes the commands and their parameters are separated by spaces (which
+		// is what
+		// inkscape does. svg allows all sorts of variations
+		// special case the begining
+		String cmd = dAsReceived.next();
+		if (!cmd.equalsIgnoreCase("m")) {
+			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
+		}
+		dRelative.add(cmd.toLowerCase());
+		XYcoords currentAbsolute = dAsReceived.nextPair();
+		XYcoords start = currentAbsolute;
+		dRelative.add(start);
+		// default to line after a move
+		cmd = "l";
+
+		XYcoords point = new XYcoords(0.0f, 0.0f);
+		boolean lastZ = false;
+		while (dAsReceived.hasNext()) {
+			// what's next ?
+			String next = dAsReceived.next();
+			if (next.matches("[A-Za-z]")) {
+				// its a command
+				cmd = next;
+				dRelative.add(cmd.toLowerCase());
+			} else {
+				// it wasn't a command, so go back one to make the next next() give the same
+				// thing
+				dAsReceived.backOne();
+			}
+			if (cmd.equals(cmd.toLowerCase())) {
+				switch (cmd) {
+				case "m": // relative move
+					point = dAsReceived.nextPair();
+					dRelative.add(point);
+					if (lastZ) {
+						start = currentAbsolute.add(point);
+					}
+					cmd = "l"; // move is only for one segment
+					break;
+				case "l": // relative line
+				case "t": // shortcut quadratic
+					point = dAsReceived.nextPair();
+					dRelative.add(point);
+					break;
+				case "h": // relative horizontal
+					point = new XYcoords(dAsReceived.nextValue(), 0.0f);
+					dRelative.add(point.getX());
+					break;
+				case "v":
+					point = new XYcoords(0.0f, dAsReceived.nextValue());
+					dRelative.add(point.getY());
+					break;
+				case "z":
+					// reset where we are
+					currentAbsolute = start;
+
+					point = new XYcoords(0.0f, 0.0f);
+					break;
+				case "c": // relative bezier - 3 xy pairs, last is next node
+					dRelative.copy(dAsReceived, 4);
+					point = dAsReceived.nextPair();
+					dRelative.add(point);
+					break;
+				case "s": // shortcut bezier - 2 xy pairs
+				case "q": // quadratic
+					dRelative.copy(dAsReceived, 2);
+					point = dAsReceived.nextPair();
+					dRelative.add(point);
+					break;
+
+				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
+				          // destinatioin (x,y)
+					dRelative.copy(dAsReceived, 5);
+					point = dAsReceived.nextPair();
+					dRelative.add(point);
+					break;
+				default:
+					throw new IllegalStateException(
+					        "unsupported relative path command " + cmd + " from " + dAsReceived);
+				}
+
+				currentAbsolute = currentAbsolute.add(point);
+			} else {
+				changed = true;
+				switch (cmd) {
+				case "M": // absolute move
+					cmd = "l"; // move is only for one segment
+					point = dAsReceived.nextPair().subtract(currentAbsolute);
+					dRelative.add(point);
+					if (lastZ) {
+						start = currentAbsolute.add(point);
+					}
+					break;
+					case "L": // absolute line
+				case "T": // shortcut quadratic
+					point = dAsReceived.nextPair().subtract(currentAbsolute);
+					dRelative.add(point);
+					break;
+				case "H": // absolute horizontal
+					float relX = dAsReceived.nextValue() - currentAbsolute.getX();
+					point = new XYcoords(relX, 0.0f);
+					dRelative.add(relX);
+					break;
+				case "V":
+					float relY = dAsReceived.nextValue() - currentAbsolute.getY();
+					point = new XYcoords(0.0f, relY);
+					dRelative.add(relY);
+					break;
+				case "Z":
+					// reset where we are
+					currentAbsolute = start;
+
+					point = new XYcoords(0.0f, 0.0f);
+					break;
+				case "C": // absolute bezier - 3 xy pairs, last is next node
+					dRelative.add(dAsReceived.nextPair().subtract(currentAbsolute));
+					dRelative.add(dAsReceived.nextPair().subtract(currentAbsolute));
+					point = dAsReceived.nextPair().subtract(currentAbsolute);
+					dRelative.add(point);
+					break;
+				case "S": // shortcut bezier - 2 xy pairs
+				case "Q": // quadratic
+					dRelative.add(dAsReceived.nextPair().subtract(currentAbsolute));
+					point = dAsReceived.nextPair().subtract(currentAbsolute);
+					dRelative.add(point);
+					break;
+
+				case "A": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
+				          // destinatioin (x,y)
+					dRelative.add(dAsReceived.nextPair().subtract(currentAbsolute));
+					dRelative.copy(dAsReceived, 3);
+					point = dAsReceived.nextPair().subtract(currentAbsolute);
+					dRelative.add(point);
+					break;
+				default:
+					throw new IllegalStateException(
+					        "unsupported absolute path command " + cmd + " from " + dAsReceived);
+				}
+//				LOGGER.debug("before cmd {} abs was {}", cmd, currentAbsolute);
+				currentAbsolute = currentAbsolute.add(point);
+//				LOGGER.debug("after cmd " + cmd + " rel XY is {}, current abs is {}", point, currentAbsolute);
+			}
+//			LOGGER.debug("after cmd " + cmd + " rel XY is {}, current abs is {}", point, currentAbsolute);
+			lastZ = cmd.equalsIgnoreCase("z");
+		}
+		if (changed) {
+//			LOGGER.debug("d made relative {}", dRelative.getD());
+			element.setAttribute("d", dRelative.getD());
+		}
+
+	}
 
 }

@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
 
@@ -24,7 +26,8 @@ public class PiecesDocument {
 	private Element defs;
 	private static final XPathUtil XPU = XPathUtil.getSVG();
 	public static final String TEMPLATE_SUFFIX = "_template";
-
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(PiecesDocument.class.getName());
 
 	public PiecesDocument(String inputFile) {
 		
@@ -62,6 +65,9 @@ public class PiecesDocument {
     		}
     
     		SvgObject template = obj.clone(templateName );
+    		LOGGER.debug("templating {}", name);
+    		template.internaliseTransformation();
+    		
     		template.setCentre(XYcoords.ORIGIN);
     		template.openStyle();
     		addDefObject(template);
@@ -159,7 +165,7 @@ public class PiecesDocument {
 		outputLayer.appendChild(line);
 	}
 
-	public void addText( Element parent, String text, float size, float  x, float y, boolean bold, String colour ) {
+	public void addText( Element parent, String text, float size, float  x, float y, String mods, String colour, String justification ) {
 		Element textElement = svg.createElement("text");
 		textElement.setAttribute("font-size", Float.toString(size) + "px");
 		textElement.setAttribute("fill", colour);
@@ -171,12 +177,31 @@ public class PiecesDocument {
     		textElement.setAttribute("font-family", "webdings");
     	} else {
     		textElement.appendChild(svg.createText(text));
-    		if (bold) {
+    		if (mods.contains("bold")) {
     			textElement.setAttribute("font-weight", "bold");
+    		}
+    		if (mods.contains("italic")) {
+    			textElement.setAttribute("font-style", "italic");
     		}
     	}
 		// x, y apply to the centre of the text
-		textElement.setAttribute("text-anchor", "middle");
+		final String anchor;
+		switch (justification) {
+		case "C":
+			anchor = "middle";
+			break;
+		case "R":
+			anchor = "end";
+			break;
+		case "L":
+			anchor = "start";
+			break;
+
+		default:
+			anchor = "middle";
+			break;
+		}
+		textElement.setAttribute("text-anchor", anchor);
 		textElement.setAttribute("dominant-baseline", "middle");
 		textElement.setAttribute("x", Float.toString(x));
 		textElement.setAttribute("y", Float.toString(y));

@@ -9,6 +9,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 
@@ -17,6 +19,8 @@ public class SvgGroup extends SvgObject {
 	private static final XPathUtil XPU = XPathUtil.getSVG();
 	
 	private final List<SvgObject> children = new ArrayList<>();;
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(SvgGroup.class.getName());
 	
 	public SvgGroup (Element originalElement) {
 		super(originalElement);
@@ -54,7 +58,7 @@ public class SvgGroup extends SvgObject {
 
    		for (SvgObject child : children) {
    			XYcoords tl = child.getTopLeft();
-//   			System.out.println("  child " + child.getId() + " tl = " + tl);
+   			LOGGER.debug("for child {} centre will be {}", child.getId(), tl.meanWith(child.getBottomRight()));
    			if (tl.getX() < leftmostX ) {
    				leftmostX = tl.getX();
    			}
@@ -62,8 +66,9 @@ public class SvgGroup extends SvgObject {
    				topmostY = tl.getY();
    			}
 		}
-//   		System.out.println(" group tl = " + leftmostX + "," + topmostY);
-   		return new XYcoords(leftmostX, topmostY);
+   		XYcoords topLeft = new XYcoords(leftmostX, topmostY);
+   		LOGGER.debug("for group {}, tl is {}", getId(), topLeft);
+		return topLeft;
 	}
 
 	@Override
@@ -74,7 +79,6 @@ public class SvgGroup extends SvgObject {
 
    		for (SvgObject child : children) {
    			XYcoords br = child.getBottomRight();
-//   			System.out.println("  child " + child.getId() + " tl = " + tl);
    			if (br.getX() > rightmostX ) {
    				rightmostX = br.getX();
    			}
@@ -82,18 +86,12 @@ public class SvgGroup extends SvgObject {
    				bottommostY = br.getY();
    			}
 		}
-//   		System.out.println(" group tl = " + leftmostX + "," + topmostY);
-   		return new XYcoords(rightmostX, bottommostY);
+   		XYcoords bottomRight = new XYcoords(rightmostX, bottommostY);
+   		LOGGER.debug("for group {}, br is {}", getId(), bottomRight);
+
+		return bottomRight;
 	}
 	
-	@Override
-	public void setTopLeft( XYcoords absoluteTopLeft ) {
-		// what is the current tl
-		XYcoords oldTL = getTopLeft();
-		// how much are we moving it
-		XYcoords movement = absoluteTopLeft.subtract(oldTL);
-		move(movement);
-	}
 
 	@Override
 	public void move( XYcoords movement ) {
@@ -102,8 +100,59 @@ public class SvgGroup extends SvgObject {
 		}
 	}
 
+	
+	@Override
+	public boolean internaliseTransformation(XYcoords base) {
+		// first apply transformations of children
+		XYcoords groupBase = base != null ? base : getCentre();
+		boolean changes = false;
+		for (SvgObject child : children) {
+			if (child.internaliseTransformation(groupBase)) {
+				LOGGER.debug("made transformation changes to {}'s child {}", getId(), child.getId());
+				changes = true;
+			}
+		}
+		//then apply our own (if this can be) 
+		if (super.internaliseTransformation(groupBase)) {
+			LOGGER.debug("made group transformation changes to  {}", getId());
+			changes = true;
+		}
+		return changes;
+	}
+
+//	@Override
+//	public void applyTransform(XYcoords base, Transform trans) {
+//		for (SvgObject child : children) {
+//			child.applyTransform(base, trans);
+//		}
+//	}
+
+	@Override
+	public void scale(Transform trans) {
+		XYcoords centre = getCentre();
+		for (SvgObject child : children) {
+			child.scaleTo(centre, trans);
+		}
+	}
+	
+	@Override
+	public void scaleTo(XYcoords base, Transform trans) {
+		for (SvgObject child : children) {
+			child.scaleTo(base, trans);
+		}
+	}
+	
+	
+	@Override
+	public void translate(Transform trans) {
+		for (SvgObject child : children) {
+			child.translate(trans);
+		}
+	}
+	
 	@Override
 	public void openStyle() {
+		super.openStyle();
 		for (SvgObject child : children) {
 			child.openStyle();
 		}
