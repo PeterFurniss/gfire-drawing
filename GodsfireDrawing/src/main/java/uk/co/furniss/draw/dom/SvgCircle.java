@@ -83,6 +83,11 @@ public class SvgCircle extends SvgObject {
 	}
 
 	@Override
+	public XYcoords getStart() {
+		return new XYcoords(cx, cy);
+	}
+
+	@Override
 	public XYcoords getTopLeft() {
 		// this is top left of the enclosing box
 		return new XYcoords(cx - r, cy - r);

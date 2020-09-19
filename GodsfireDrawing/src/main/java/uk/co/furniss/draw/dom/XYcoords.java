@@ -38,10 +38,16 @@ public class XYcoords {
 	}
 	
 	public XYcoords add(XYcoords other) {
+		if (other == null)  {
+			return this;
+		}
 		return new XYcoords(x + other.x, y + other.y);
 	}
 	
 	public XYcoords subtract(XYcoords other) {
+		if (other == null)  {
+			return this;
+		}
 		return new XYcoords(x - other.x, y - other.y);
 	}
 	

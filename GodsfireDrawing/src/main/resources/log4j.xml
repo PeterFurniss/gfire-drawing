@@ -6,7 +6,7 @@
 			<param name="ConversionPattern" value="%d{HH:mm:ss.SSS} %-5p (%40F:%3L) - %m%n" />
 		</layout>
 	</appender>
-	<logger name="uk.co.furniss.draw.dom.SvgPath">
+	<logger name="uk.co.furniss.draw.dom.SvgText">
 		<level value="warn" />
 	</logger>
 	<logger name="uk.co.furniss.draw.dom.SvgCircle">
@@ -21,7 +21,7 @@
 	<logger name="uk.co.furniss.draw.dom.PiecesDocument">
 		<level value="warn" />
 	</logger>
-		<logger name="uk.co.furniss.draw.piecemaker.PieceMakerMain">
+		<logger name="uk.co.furniss.draw.piecemaker.PieceMakerMainBox">
 		<level value="warn" />
 	</logger>
 	<root>

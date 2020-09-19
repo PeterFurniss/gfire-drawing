@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
@@ -14,7 +16,8 @@ public class SVGmangler  {
 	
 	public static final XPathUtil XPU = XPathUtil.getSVG();
 
-
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(SVGmangler.class.getName());
 	/**
 	 * build godsfire 3-d map
 	 * @param docElement	parent document (or element ?). Contains the pattern hexes
@@ -43,12 +46,12 @@ public class SVGmangler  {
 	}
 
 	public static SvgObject getSvgObject(Element topElement, String name) {
-//		System.out.println("Looking in " + topElement.getAttribute("id") + " for " + name);
+		LOGGER.debug("Looking in " + topElement.getAttribute("id") + " for " + name);
 		Element xmlElement = XPU.findElement(topElement, ".//*[@id='" + name + "']");
 		if (xmlElement != null) {
 			return SvgObject.makeSvgObject(xmlElement);
 		}
-		throw new IllegalStateException("Cannot find svg object " + name + ".");
+		throw new IllegalStateException("Cannot find svg object " + name + " in " + topElement.getAttribute("id") + ".");
 	}
 
 	/**

@@ -79,16 +79,16 @@ public class Transform {
 	}
 	
 	public XYcoords translate( XYcoords original ) {
-		return original;
-//		if (translating) {
-//			XYcoords result = original;
-//			for (TransformationRevised transformation : functions) {
-//				result = transformation.translate(result);
-//			}
-//			return result;
-//		} else {
-//			return original;
-//		}
+//		return original;
+		if (translating) {
+			XYcoords result = original;
+			for (TransformationRevised transformation : functions) {
+				result = transformation.translate(result);
+			}
+			return result;
+		} else {
+			return original;
+		}
 	}
 
 	public boolean isInternalising() {

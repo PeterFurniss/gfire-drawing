@@ -1,12 +1,7 @@
 package uk.co.furniss.draw.dom;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -103,8 +98,12 @@ public class SvgGroup extends SvgObject {
 	
 	@Override
 	public boolean internaliseTransformation(XYcoords base) {
+		// what should the default base be ? origin or some point in here ?
+		// or different for scale and translate ? or child and whole
+		XYcoords groupBase = base != null ? base :
+			XYcoords.ORIGIN;
+//			children.get(0).getStart();
 		// first apply transformations of children
-		XYcoords groupBase = base != null ? base : getCentre();
 		boolean changes = false;
 		for (SvgObject child : children) {
 			if (child.internaliseTransformation(groupBase)) {
@@ -120,12 +119,22 @@ public class SvgGroup extends SvgObject {
 		return changes;
 	}
 
+	@Override
+	public XYcoords getStart() {
+		return children.get(0).getStart();
+	}
 //	@Override
 //	public void applyTransform(XYcoords base, Transform trans) {
 //		for (SvgObject child : children) {
 //			child.applyTransform(base, trans);
 //		}
 //	}
+
+	@Override
+	public String toString() {
+		return "group  " + getId() + " trans " + getTransformAttribute() 
+			+ children.stream().map(Object::toString).collect(Collectors.joining("\n    ","\n    ","\n  end group"));
+	}
 
 	@Override
 	public void scale(Transform trans) {

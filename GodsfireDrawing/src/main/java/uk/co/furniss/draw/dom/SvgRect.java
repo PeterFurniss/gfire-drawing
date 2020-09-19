@@ -77,6 +77,12 @@ public class SvgRect extends SvgObject {
 		return new XYcoords(x, y);
 	}
 
+	
+	@Override
+	public XYcoords getStart() {
+		return getTopLeft();
+	}
+
 	@Override
 	public XYcoords getBottomRight() {
 		return new XYcoords(x + width, y + height);
@@ -107,4 +113,10 @@ public class SvgRect extends SvgObject {
 
 	}
 
+	@Override
+	public String toString() {
+		return "rect " + getId() + "  x=" + x + ", y=" + y + ", w=" + width + ", h=" + height + ", trans=" + getTransformAttribute() + ".";
+	}
+
+	
 }

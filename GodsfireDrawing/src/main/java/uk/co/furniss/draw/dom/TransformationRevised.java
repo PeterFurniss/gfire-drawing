@@ -16,7 +16,7 @@ public class TransformationRevised {
 	private final boolean translating;
 	private final boolean scaling;
 	
-	private final static Pattern FUNCTION_PATTERN = Pattern.compile("(\\w+)\\(([\\d-\\., ]+)\\)");
+	private final static Pattern FUNCTION_PATTERN = Pattern.compile("(\\w+)\\(([e\\d-\\., ]+)\\)");
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Transformation.class.getName());
 	
@@ -32,7 +32,8 @@ public class TransformationRevised {
 			}
 			switch (method) {
 			case "matrix":
-				if (Math.signum(vals[1]) != 0 || Math.signum(vals[2]) != 0) {
+				// can't yet cope with significant skew or rotation
+				if (Math.abs(vals[1]) > 0.001f || Math.abs(vals[2]) > 0.001f) {
 					throw new IllegalArgumentException("Cannot cope with complex transformation " + function);
 				}
 				scaleX = vals[0];
@@ -47,7 +48,7 @@ public class TransformationRevised {
 				scaleX = 1.0f;
 				scaleY = 1.0f;
 				translateX = vals[0];
-				translateY = vals.length > 1 ? translateX : 0.0f;
+				translateY = vals.length > 1 ? vals[1] : translateX;
 				internalising = true;
 				translating = true;
 				scaling = false;

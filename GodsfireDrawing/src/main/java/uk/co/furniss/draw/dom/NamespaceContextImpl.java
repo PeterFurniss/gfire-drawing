@@ -29,6 +29,7 @@ public class NamespaceContextImpl implements NamespaceContext {
 		return null;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public Iterator getPrefixes( String namespaceURI ) {
 		// this isn't needed for our purposes

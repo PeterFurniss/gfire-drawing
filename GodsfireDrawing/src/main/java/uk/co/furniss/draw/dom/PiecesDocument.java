@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
 
+import uk.co.furniss.draw.piecemaker.Justification;
+
 /**
  * the xml document that starts as the image library (possibly containing other layers)
  * and ends as output document - or has a layer for that
@@ -19,6 +21,7 @@ import org.w3c.dom.Text;
  */
 public class PiecesDocument {
 
+	private final Map<String, SvgObject> knownObjects = new HashMap<>();
 	private final Map<String, SvgObject> defObjects = new HashMap<>();
 	private final SVGbuilder svg;
 	private final Element svgDoc;
@@ -57,36 +60,41 @@ public class PiecesDocument {
 
 	public String ensureTemplate(String name) {
 		String templateName = name + TEMPLATE_SUFFIX;
-		if (! defObjects.containsKey(name)) {
-	
-    		SvgObject obj = SVGmangler.getSvgObject(libraryLayer, name);
+		if (! defObjects.containsKey(templateName)) {
+			LOGGER.debug("creating template object for {}", name);
+			
+    		SvgObject obj = knownObjects.get(name);
+    		if (obj == null) {
+    			obj = findSvgObject(name);
+    		}
     		if (obj == null) {
     			throw new IllegalArgumentException("Cannot find object " + name + " in image file");
     		}
     
-    		SvgObject template = obj.clone(templateName );
-    		LOGGER.debug("templating {}", name);
-    		template.internaliseTransformation();
+    		SvgObject templateObject = obj.clone(templateName );
+    		LOGGER.debug("templating {} as {}", name, templateName);
+//    		templateObject.internaliseTransformation();
     		
-    		template.setCentre(XYcoords.ORIGIN);
-    		template.openStyle();
-    		addDefObject(template);
-    		defObjects.put(name, template);
+    		templateObject.setCentre(XYcoords.ORIGIN);
+    		templateObject.openStyle();
+    		addDefObject(templateObject);
 		}
 		return templateName;
 	}
 	
+	
 	public SvgObject findSvgObject(String name) {
-		if (defObjects.containsKey(name)) {
-			return defObjects.get(name);
+		if (knownObjects.containsKey(name)) {
+			return knownObjects.get(name);
 		}
 		SvgObject obj = SVGmangler.getSvgObject(libraryLayer, name);
-		defObjects.put(name,  obj);
+		obj.internaliseTransformation();
+		knownObjects.put(name,  obj);
 		return obj;
 	}
 
 	public Collection<SvgObject> knownObjects() {
-		return defObjects.values();
+		return knownObjects.values();
 	}
 	
 	public List<String> getLayerNames() {
@@ -165,7 +173,7 @@ public class PiecesDocument {
 		outputLayer.appendChild(line);
 	}
 
-	public void addText( Element parent, String text, float size, float  x, float y, String mods, String colour, String justification ) {
+	public void addText( Element parent, String text, float size, float  x, float y, String mods, String colour, Justification justification ) {
 		Element textElement = svg.createElement("text");
 		textElement.setAttribute("font-size", Float.toString(size) + "px");
 		textElement.setAttribute("fill", colour);
@@ -187,13 +195,19 @@ public class PiecesDocument {
 		// x, y apply to the centre of the text
 		final String anchor;
 		switch (justification) {
-		case "C":
+		case N:
+		case C:
+		case S:
 			anchor = "middle";
 			break;
-		case "R":
+		case NE:
+		case E:
+		case SE:
 			anchor = "end";
 			break;
-		case "L":
+		case NW:
+		case W:
+		case SW:
 			anchor = "start";
 			break;
 
@@ -202,14 +216,35 @@ public class PiecesDocument {
 			break;
 		}
 		textElement.setAttribute("text-anchor", anchor);
-		textElement.setAttribute("dominant-baseline", "middle");
+		final String baseline;
+		switch (justification) {
+		case NW:
+		case N:
+		case NE:
+			baseline = "hanging";
+			break;
+		case W:
+		case C:
+		case E:
+			baseline = "middle";
+			break;
+		case SW:
+		case S:
+		case SE:
+			baseline = "baseline";
+			break;
+
+		default:
+			baseline = "middle";
+			break;
+		}
+		// TBD this one needs changing
+		textElement.setAttribute("dominant-baseline", baseline);
 		textElement.setAttribute("x", Float.toString(x));
 		textElement.setAttribute("y", Float.toString(y));
 
 		parent.appendChild(textElement);
 		
 	}
-	
-
 	
 }

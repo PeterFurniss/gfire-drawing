@@ -307,7 +307,8 @@ public class SvgPath extends SvgObject {
 		return getStart().add(bottomRightOffset);
 	}
 
-	private XYcoords getStart() {
+	@Override
+	public XYcoords getStart() {
 		String dString = element.getAttribute("d");
 		Matcher m = FIRST_IN_PATH.matcher(dString);
 		if (m.matches()) {
@@ -629,6 +630,12 @@ public class SvgPath extends SvgObject {
 			element.setAttribute("d", dRelative.getD());
 		}
 
+	}
+
+	@Override
+	public String toString() {
+		return "path " + getId() + " trans=" + getTransformAttribute() 
+			+ "\nstart " + getStart() + "  TL " + topLeftOffset	 + " BR " + bottomRightOffset;
 	}
 
 }
