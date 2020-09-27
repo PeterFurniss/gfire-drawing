@@ -173,10 +173,13 @@ public class PiecesDocument {
 		outputLayer.appendChild(line);
 	}
 
-	public void addText( Element parent, String text, float size, float  x, float y, String mods, String colour, Justification justification ) {
+	public void addText( Element parent, String text, float size, XYcoords xy, String mods, String colour, Justification justification, String transform ) {
 		Element textElement = svg.createElement("text");
 		textElement.setAttribute("font-size", Float.toString(size) + "px");
 		textElement.setAttribute("fill", colour);
+		if (! transform.equals("")) {
+			textElement.setAttribute("transform", transform);
+		}
 		if (text.equals("star")) {
     		textElement.appendChild(svg.createText("«"));
     		textElement.setAttribute("font-family", "wingdings");
@@ -240,8 +243,8 @@ public class PiecesDocument {
 		}
 		// TBD this one needs changing
 		textElement.setAttribute("dominant-baseline", baseline);
-		textElement.setAttribute("x", Float.toString(x));
-		textElement.setAttribute("y", Float.toString(y));
+		textElement.setAttribute("x", Float.toString(xy.getX()));
+		textElement.setAttribute("y", Float.toString(xy.getY()));
 
 		parent.appendChild(textElement);
 		

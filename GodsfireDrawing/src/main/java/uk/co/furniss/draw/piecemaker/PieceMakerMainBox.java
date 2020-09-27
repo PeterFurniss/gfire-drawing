@@ -1,5 +1,6 @@
 package uk.co.furniss.draw.piecemaker;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,8 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
+import uk.co.furniss.draw.dom.Orientation;
 import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.SvgObject;
+import uk.co.furniss.draw.dom.SvgText;
 import uk.co.furniss.draw.dom.XYcoords;
 import uk.co.furniss.xlsx.ExcelBook;
 
@@ -37,11 +40,9 @@ public class PieceMakerMainBox {
 	private static final String FIELD_NAME_COL = "field";
 	private static final String FIELD_TYPE_COL = "type";
 	static final String FIELD_PARENTBOX_COL = "parentbox";
+	static final String FIELD_COLOURCHOICE_COL = "colour";
 	static final String FIELD_JUSTIFY_COL = "justify";
-	private static final String FIELD_FONTSIZE_COL = "fontsize";
-	private static final String FIELD_FONTFAMILY_COL = "fontfamily";
-	private static final String FIELD_FONTMOD_COL = "fontmod";
-	private static final String FIELD_ORIENTATION_COL = "orientation";
+
 	private static final String FIELD_INCREMENT_COL = "increment";
 	
 	private static final float PAGE_WIDTH = 210.0f;
@@ -57,31 +58,43 @@ public class PieceMakerMainBox {
 	public static void main( String[] args ) throws FileNotFoundException {
 		final String directory;
 		final String specFileName;
-		final String specSheetName;
-		String game = "gf";
+		final String specSheetName = "param";
+		final String game;
 		boolean testing = false;
 
-		if (game.equals("gf")) {
-			directory = "c:/Users/Peter/Documents/games/piece_maker/godsfire/";
-			specFileName = "gf_spec";
-			specSheetName = "new_param";
-		} else if (game.equals("bk")) {
-
-			directory = "c:/Users/Peter/Documents/games/piece_maker/barbkings/";
-			specFileName = "bk_spec";
-			specSheetName = "bk_spec";
-		} else {
-			throw new IllegalArgumentException("Which game are making pieces for ?  we have" + game);
+		if (args.length != 2) {
+			throw new IllegalArgumentException("two arguments required - filename of spec sheet, game identifier");
 		}
-
-		String specFile = directory + specFileName + EXCEL_SUFFIX;
-		System.out.println("Will read specification file " + specFile);
-		ExcelBook tbook = new ExcelBook(specFile);
+		specFileName = args[0];
+		game = args[1];
+//		if (game.equals("gf")) {
+//			directory = "c:/Users/Peter/Documents/games/piece_maker/godsfire/";
+//			specFileName = "gf_spec";
+//			specSheetName = "new_param";
+//		} else if (game.equals("bk")) {
+//
+//			directory = "c:/Users/Peter/Documents/games/piece_maker/barbkings/";
+//			specFileName = "bk_spec";
+//			specSheetName = "bk_spec";
+//		} else if (game.equals("rc")) {
+//
+//			directory = "c:/Users/Peter/Documents/games/piece_maker/russiancampaign/";
+//			specFileName = "rc_spec";
+//			specSheetName = "param";
+//		} else {
+//			throw new IllegalArgumentException("Which game are making pieces for ?  we have" + game);
+//		}
+		String fullSpecFileName = new File(specFileName).getAbsolutePath().replaceAll("\\\\","/");
+		
+		String specFileDirectory = fullSpecFileName.replaceFirst("/[^/]*$","");
+		System.out.println("Will read specification file " + fullSpecFileName + " in " + specFileDirectory + ".");
+		ExcelBook tbook = new ExcelBook(specFileName);
 		
 		List<Map<String, String>> specParams = tbook.readCellsAsStrings(specSheetName, Arrays.asList(
 				PARAM_DEFNID, // allow multiple sets of params
 		        PARAM_FIELDSHEET, // where the field definitions are
 		        PARAM_SPECSHEET, // says what pieces to make
+		        PARAM_DIRECTORY, // where the image and output files are. if relative, relative to the spec sheet
 		        PARAM_IMAGEFILE, // svg file containing images
 		        PARAM_IMAGELAYER, // layer in imagefile with the images
 		        PARAM_IMAGESIZE, // size of images as in imagefile
@@ -91,9 +104,23 @@ public class PieceMakerMainBox {
 
 		));
 		
-		Map<String, String> parameters = specParams.get(0);
-		parameters.put(PARAM_DIRECTORY, directory);
-		
+		Map<String, String> parameters = null;
+		for (Map<String, String> line : specParams) {
+			String defnId = line.get(PARAM_DEFNID);
+			if (defnId.equals(game)) {
+				parameters = line;
+				break;
+			}
+		}
+		if (parameters == null) {
+			throw new IllegalArgumentException("Game " + game + " doesn't have a line in spec sheet");
+		}
+		String dir = parameters.get(PARAM_DIRECTORY);
+		if (dir.startsWith("..")) {
+			parameters.put(PARAM_DIRECTORY, dir.replaceFirst("..", new File(specFileDirectory).getParent()));
+		} else if (dir.startsWith(".")) {
+			parameters.put(PARAM_DIRECTORY, dir.replaceFirst(".", specFileDirectory));
+		}
 		
 		PieceMakerMainBox instance = new PieceMakerMainBox(parameters, tbook, testing);
 
@@ -109,6 +136,7 @@ public class PieceMakerMainBox {
 	private static final float MARGIN = 10.0f;
 	private List<String> fieldNames;
 	private final float scaling;
+	private final List<String> colourChoices = new ArrayList<>();
 
 	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook, boolean testing ) {
 		
@@ -120,16 +148,13 @@ public class PieceMakerMainBox {
 				FIELD_NAME_COL, // columns of the spec  sheet
 				FIELD_TYPE_COL,   // image, colour, text,number
 		        FIELD_PARENTBOX_COL, // surrounding box to define this image/textfield position
+		        FIELD_COLOURCHOICE_COL,  // which fore ground colour is this
 		        FIELD_JUSTIFY_COL, // which point of image/text to key on (N, NE, E ... or C)
-		        FIELD_FONTSIZE_COL, // iff this is text, fontsize in original
-		        FIELD_FONTFAMILY_COL, // defaults to sans serif
-		        FIELD_FONTMOD_COL, // bold, italic etc
-		        FIELD_ORIENTATION_COL, // defaults to zero - normal left->right
 		        FIELD_INCREMENT_COL)); // this value is incremented for multiple pieces of same spec
 
 		fieldNames = fieldDefinitions.stream().map(c -> c.get(FIELD_NAME_COL)).collect(Collectors.toList());
 
-		imageFile = parameters.get(PARAM_DIRECTORY) + parameters.get(PARAM_IMAGEFILE) + SVG_SUFFIX;
+		imageFile = parameters.get(PARAM_DIRECTORY) + "/" + parameters.get(PARAM_IMAGEFILE) + SVG_SUFFIX;
 		System.out.println("Will read image file " + imageFile);
 
 		piecesDoc = new PiecesDocument(imageFile);
@@ -142,7 +167,6 @@ public class PieceMakerMainBox {
 
 		scaling = pieceSize / imageDefinitionSize;
 		float gap = Float.parseFloat(parameters.get(PARAM_GAP));
-		boolean withGap = gap > 0.01f;
 		pieceSpacing = pieceSize + gap;
 		
 		// saving this for later
@@ -152,16 +176,23 @@ public class PieceMakerMainBox {
 		//    image fields are questions of where
 		//    text fields are all the attribues of the text except its content
 
-
 		for (Map<String, String> fieldDefn : fieldDefinitions) {
 			String name = fieldDefn.get(FIELD_NAME_COL);
+			if (name.equals("")) {
+				// in case ExcelBook has returned rows that are now deleted
+				break;
+			}
 			String type = fieldDefn.get(FIELD_TYPE_COL);
 			switch (type) {
 			case "number":
 				// nothing to set up
 				break;
 			case "colour":
-				// nothing heee either
+				if (name.equals("back")) {
+					// nothing to do
+				} else {
+					colourChoices.add(name);
+				}
 				break;
 			case "image":
 				imageFields.add(new ImageField(fieldDefn, imageFile));
@@ -187,7 +218,11 @@ public class PieceMakerMainBox {
 
 		List<Map<String, String>> specs = tbook.readCellsAsStrings(parameters.get(PARAM_SPECSHEET), fieldNames);
 		int totalPieces = 0;
-		String oldFore = "white";
+		Map<String, String> foreColours = new HashMap<>();
+		for (String choice : colourChoices) {
+			// can't be bothered looking up the stream for this
+			foreColours.put(choice, "green");
+		}
 		String oldBack = "black";
 		int row = 0;
 		int col = 0;
@@ -206,6 +241,7 @@ public class PieceMakerMainBox {
 					String imageName = spec.get(imageField.getName());
 					Image image = images.get(imageName);
 					if (image == null) {
+						LOGGER.debug("getting offset for {}", imageName);
 						XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
 
 						
@@ -220,16 +256,18 @@ public class PieceMakerMainBox {
 				for (String incrementer : incrementingFields) {
 					incrementers.put(incrementer, getAsInteger(incrementer, spec));
 				}
-
-				String foreColour = spec.get("fore");
-				String backColour = spec.get("back");
-				if (foreColour.equals("")) {
-					foreColour = oldFore;
+				for (String choice : colourChoices) {
+					String colour = spec.get(choice);
+					
+					if (! colour.equals("")) { 
+						foreColours.put(choice,  colour);
+					}
 				}
+
+				String backColour = spec.get("back");
 				if (backColour.equals("")) {
 					backColour = oldBack;
 				}
-				oldFore = foreColour;
 				oldBack = backColour;
 				
 				for (int item = 0; item < number; item++) {
@@ -247,7 +285,7 @@ public class PieceMakerMainBox {
 						XYcoords offset = location.add(imageField.getCurrentOffset());
 						Element pic = piecesDoc.addCloneOfTemplate(outputLayer, imageField.getTemplateName(), offset.getX(),
 						        offset.getY());
-						pic.setAttribute("fill", foreColour);
+						pic.setAttribute("fill", foreColours.get(imageField.getColourChoice()));
 
 						pic.setAttribute("transform", transformStart + Float.toString(offset.getX() * antiScale) + ","
 						        + Float.toString(offset.getY() * antiScale) + ")");
@@ -267,8 +305,10 @@ public class PieceMakerMainBox {
 							text = spec.get(name);
 						}
 						if (text.length() > 0) {
-							piecesDoc.addText(outputLayer, text, tf.getFontSize(), x + tf.getXoffset(),
-							        y + tf.getYoffset(), tf.getFontmod(), foreColour, tf.getJustification());
+							piecesDoc.addText(outputLayer, text, tf.getFontSize(), 
+									tf.transformForward(new XYcoords(x + tf.getXoffset(), y + tf.getYoffset())),
+									tf.getFontmod(), foreColours.get(tf.getColourChoice()), 
+							        tf.getJustification(), tf.getOrientation());
 						}
 					}
 					col++;
@@ -299,7 +339,7 @@ public class PieceMakerMainBox {
 			        .println("Created " + page + " pages of " + totalPieces + " pieces with size " + pieceSize + "mm");
 			piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);
 		}
-		piecesDoc.writeToFile(parameters.get(PARAM_DIRECTORY) + outName + SVG_SUFFIX);
+		piecesDoc.writeToFile(parameters.get(PARAM_DIRECTORY) + "/" + outName + SVG_SUFFIX);
 	}
 
 	public int columnsPerRow( float gap ) {
@@ -372,12 +412,15 @@ public class PieceMakerMainBox {
 		private final Justification justification;
 		
 		private Image currentImage;
+		private final String colourChoice;
 
 		ImageField(Map<String, String> defn, String imageFile) {
 			name = defn.get(FIELD_NAME_COL);
 			this.boxNamePattern = defn.get(PieceMakerMainBox.FIELD_PARENTBOX_COL);
 
 			this.justification = Justification.valueOf(defn.get(PieceMakerMainBox.FIELD_JUSTIFY_COL).toUpperCase());
+			this.colourChoice = defn.get("colour") != null ? defn.get("colour") : "fore";
+
 		}
 
 		public String getBoxName(String imageName) {
@@ -412,6 +455,10 @@ public class PieceMakerMainBox {
 
 		public XYcoords getCurrentOffset() {
 			return currentImage.getOffset();
+		}
+
+		public String getColourChoice() {
+			return colourChoice;
 		}
 
 	}
@@ -486,15 +533,24 @@ public class PieceMakerMainBox {
 		private final String fontfamily;
 		private final String fontmod;
 		private final Justification justify;
-		private final String orientation; // should be enum
+		private final Orientation orientation; 
 		private final boolean increment;
+		private final String colourChoice;
 
 		TextField(Map<String, String> defn) {
 			name = defn.get(FIELD_NAME_COL);
-			fontSize = Float.parseFloat(defn.get(FIELD_FONTSIZE_COL)) * scaling;
+			
+			SvgObject textModel = piecesDoc.findSvgObject(name);
+			final SvgText model;
+			if (textModel instanceof SvgText) {
+				model = (SvgText) textModel;
+			} else {
+				throw new IllegalStateException(name + " is not a SvgText, but " + textModel.getClass().getSimpleName());
+			}
+			fontSize = model.getFontSizePx() * scaling;  
 			// these will be "" due to behaviour of excel reading
-			fontfamily = defn.get(FIELD_FONTFAMILY_COL);
-			fontmod = defn.get(FIELD_FONTMOD_COL);
+			fontfamily = model.getFontFamily();
+			fontmod = model.getFontMod();
 			Justification justifyRequest = Justification.valueOf(defn.get(FIELD_JUSTIFY_COL) != null ? defn.get(FIELD_JUSTIFY_COL).toUpperCase() : "C");
 
 			switch (justifyRequest) {
@@ -503,15 +559,16 @@ public class PieceMakerMainBox {
 			case NE: case E: case SE : justify = Justification.SE; break;
 			default: throw new IllegalStateException("Unknown justification code " + justifyRequest);
 			}
-			offset = getOffset(name, defn.get(FIELD_PARENTBOX_COL));
-			orientation = defn.get(FIELD_ORIENTATION_COL);
+			
+			orientation = model.getRotation();
+			offset = determineOffset(defn.get(FIELD_PARENTBOX_COL), model);
 			String incrementStr = defn.get(FIELD_INCREMENT_COL);
 			increment = incrementStr != null && incrementStr.equalsIgnoreCase("TRUE");
+			colourChoice = defn.get("colour") != null ? defn.get("colour") : "fore";
 
 		}
 
-		private XYcoords getOffset( String textModelName, String boxName ) {
-			SvgObject textModel = piecesDoc.findSvgObject(textModelName);
+		public XYcoords determineOffset( String boxName, SvgObject textModel ) {
 			SvgObject box = piecesDoc.findSvgObject(boxName);
 			if (box == null) {
 				throw new IllegalArgumentException("Cannot find box " + boxName);
@@ -519,8 +576,10 @@ public class PieceMakerMainBox {
 			// text has funny rules
 			XYcoords boxTL = box.getTopLeft();
 			XYcoords boxBR = box.getBottomRight();
+			LOGGER.debug("box for text : tl {}, br {}", boxTL, boxBR);
 			// text BR is actually its coordinates - which always
-			XYcoords imageBR = textModel.getBottomRight();
+			XYcoords imageBR = transformBackward(textModel.getBottomRight());
+
 			// check its in bounds
 			if (boxTL.getX() <= imageBR.getX() && boxTL.getY() <= imageBR.getY() && boxBR.getX() >= imageBR.getX()
 			        && boxBR.getY() >= imageBR.getY()) {
@@ -531,7 +590,10 @@ public class PieceMakerMainBox {
 			} else {
 				throw new IllegalArgumentException("image " + textModel.getId() + " is not inside its box");
 			}
-
+		}
+		
+		public String getColourChoice() {
+			return colourChoice;
 		}
 		
 		public String getName() {
@@ -563,12 +625,60 @@ public class PieceMakerMainBox {
 		}
 
 		public String getOrientation() {
-			return orientation;
+			return orientation.getRotation();
 		}
 
 		public boolean isIncrement() {
 			return increment;
 		}
+		
+
+		public XYcoords transformForward(XYcoords original) {
+			final XYcoords result;
+			switch (orientation) {
+			case BOTTOM:
+				result = original;
+				break;
+			case RIGHT:
+				result = new XYcoords(-original.getY(), original.getX());
+				break;
+			case TOP:
+				result = new XYcoords(-original.getX(), -original.getY());
+				break;
+			case LEFT:
+				result = new XYcoords(original.getY(), -original.getX());
+				break;
+			default:
+				throw new IllegalStateException("Unknown orientation " + orientation);
+			}
+			return result;
+			
+		}
+		
+		public XYcoords transformBackward(XYcoords original) {
+			// rotational changes are not removed by internalise transformation
+			// these changes will be inexact
+			final XYcoords result;
+			switch (orientation) {
+			case BOTTOM:
+				result = original;
+				break;
+			case RIGHT:
+				result = new XYcoords(original.getY(), -original.getX());
+				break;
+			case TOP:
+				result = new XYcoords(-original.getX(), -original.getY());
+				break;
+			case LEFT:
+				result = new XYcoords(-original.getY(), original.getX());
+				break;
+			default:
+				throw new IllegalStateException("Unknown orientation " + orientation);
+			}
+			return result;
+			
+		}
+
 	}
 
 	public static int getAsInteger( String key, Map<String, String> spec ) {

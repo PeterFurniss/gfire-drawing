@@ -24,7 +24,7 @@ public class SvgText extends SvgObject {
 	private  Map<String, String> styling = new HashMap<>();
 	private  String style;
 	private  String content;
-	
+	private  Orientation rotation;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SvgText.class.getName());
 	
@@ -37,7 +37,8 @@ public class SvgText extends SvgObject {
 		this.content = textElement.getTextContent();
 		this.style = textElement.getAttribute("style");
 		LOGGER.debug("text element style {}\n                content {}", style, content);
-		
+		String transform = textElement.getAttribute("transform");
+		this.rotation = Orientation.fromTransform(transform);
 		Matcher mstyle = STYLE_PATTERN.matcher(style);
 		while (mstyle.find()) {
 			styling.put(mstyle.group(1),  mstyle.group(2));
@@ -51,7 +52,7 @@ public class SvgText extends SvgObject {
 			}
 			// the tspan seems to be one character before the end
 //			this.x = Float.parseFloat(tspanElement.getAttribute("x"));
-			this.y = Float.parseFloat(tspanElement.getAttribute("y"));
+//			this.y = Float.parseFloat(tspanElement.getAttribute("y"));
 			LOGGER.debug("tspan element at {}, {}", x, y);
 			String tspanStyle = tspanElement.getAttribute("style");
 			mstyle = STYLE_PATTERN.matcher(tspanStyle);
@@ -81,7 +82,7 @@ public class SvgText extends SvgObject {
 
 	private static final Pattern FONTSIZE_PATTERN = Pattern.compile("([\\d\\.]+)(.*)");
 	
-	private float getFontSizePx() {
+	public float getFontSizePx() {
 		String fontsizeString = styling.get("font-size");
 		Matcher mFS = FONTSIZE_PATTERN.matcher(fontsizeString);
 		if (mFS.matches()) {
@@ -166,6 +167,20 @@ public class SvgText extends SvgObject {
 		 y += movement.getY();
 		 setXY();
 
+	}
+
+	public String getFontFamily() {
+		return styling.get("font-family");
+	}
+
+	public String getFontMod() {
+		
+		return styling.get("font-style") + "/" + styling.get("font-weight");
+		
+	}
+
+	public Orientation getRotation() {
+		return rotation;
 	}
 
 }

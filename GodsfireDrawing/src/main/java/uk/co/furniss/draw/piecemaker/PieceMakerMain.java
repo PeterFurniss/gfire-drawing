@@ -234,8 +234,9 @@ public class PieceMakerMain {
 							text = spec.get(name);
 						}
 						if (text.length() > 0) {
-							piecesDoc.addText(outputLayer, text, tf.getFontSize(), x + tf.getXoffset(),
-							        y + tf.getYoffset(), tf.getFontmod(), foreColour, Justification.valueOf(tf.getJustification()));
+							piecesDoc.addText(outputLayer, text, tf.getFontSize(), 
+									new XYcoords(x + tf.getXoffset(), y + tf.getYoffset()),
+									tf.getFontmod(), foreColour, Justification.valueOf(tf.getJustification()), "");
 						}
 					}
 					col++;

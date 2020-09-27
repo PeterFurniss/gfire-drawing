@@ -72,11 +72,21 @@ public class ExcelBook {
 		}
 	}
 
+	private List<String> listSheets() {
+		int n = workbook.getNumberOfSheets();
+		List<String> sheetNames = new ArrayList<>();
+		for (int i = 0 ; i < n; i++) {
+			sheetNames.add(workbook.getSheetName(i));
+		}
+		return sheetNames;
+	}
+	
 	private Sheet getSheet( String sheetName ) {
 		Sheet aSheet = workbook.getSheet(sheetName);
 		if (aSheet == null) {
+			
 			throw new IllegalArgumentException(
-			        "Workbook '" + bookName + "' does not contain a sheet '" + sheetName + "'");
+			        "Workbook '" + bookName + "' does not contain a sheet '" + sheetName + "'. Sheets are " + listSheets());
 		}
 		return aSheet;
 	}
@@ -94,9 +104,11 @@ public class ExcelBook {
 				String colName = colNames.get(i);
 				Cell cell = row.getCell(i);
 				if (firstRow) {
-					if (cell == null || !colName.equals(cell.getStringCellValue())) {
+					if (cell == null) {
+						throw new IllegalArgumentException("Header line had null cell when looking for " + colName);
+					} else if ( !colName.equals(cell.getStringCellValue())) {
 							throw new IllegalArgumentException("Mismatched header line, expected " + colName 
-									+ " but was " + cell.getStringCellValue());
+									+ " but was " + cell == null ? "null" : cell.getStringCellValue());
 					}
 				} else {
 					if (cell != null) {
