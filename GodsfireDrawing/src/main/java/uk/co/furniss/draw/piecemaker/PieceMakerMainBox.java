@@ -641,10 +641,11 @@ public class PieceMakerMainBox {
 	}
 
 	public void drawFiducialLines( float gap, int rows, Element outputLayer ) {
+		// cols per row is actually the limit for zero-base
 		int colsPerRow = columnsPerRow(pieceSpacing);
 		boolean withGap = gap > 0.1f;
 		float x1 = MARGIN - gap;
-		float x2 = x1 + ( colsPerRow) * pieceSpacing + gap;
+		float x2 = x1 + (colsPerRow - 1) * pieceSpacing + gap;
 		
 		for (int r = 0; r < rows + 2; r++) {
 			float y = MARGIN + r * pieceSpacing;
@@ -657,7 +658,7 @@ public class PieceMakerMainBox {
 		}
 		float y1 = MARGIN - gap;
 		float y2 = x1 + ( rows + 1 ) * pieceSpacing + gap;
-		for (int c = 0; c < colsPerRow + 1; c++) {
+		for (int c = 0; c < colsPerRow ; c++) {
 			float x = MARGIN + c * pieceSpacing;
 			piecesDoc.drawLine(outputLayer, new XYcoords(x, y1), new XYcoords(x, y2));
 			if (withGap) {
