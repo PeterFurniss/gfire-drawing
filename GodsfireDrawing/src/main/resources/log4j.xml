@@ -9,7 +9,7 @@
 	<logger name="uk.co.furniss.draw.dom.SvgText">
 		<level value="warn" />
 	</logger>
-	<logger name="uk.co.furniss.draw.dom.SvgCircle">
+	<logger name="uk.co.furniss.draw.dom.SvgPath">
 		<level value="warn" />
 	</logger>
 	<logger name="uk.co.furniss.draw.dom.SvgObject">

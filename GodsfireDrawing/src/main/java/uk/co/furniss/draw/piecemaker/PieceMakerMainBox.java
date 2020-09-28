@@ -51,11 +51,9 @@ public class PieceMakerMainBox {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PieceMakerMainBox.class.getName());
 	private static final String SVG_SUFFIX = ".svg";
-	private static final String EXCEL_SUFFIX = ".xlsx";
 	private static final String PARAM_DIRECTORY = "directory";
 
 	public static void main( String[] args ) throws FileNotFoundException {
-		final String directory;
 		final String specFileName;
 		final String specSheetName = "param";
 		final String game;
@@ -237,18 +235,22 @@ public class PieceMakerMainBox {
 				int number = getAsInteger("number", spec);
 				for (ImageField imageField : imageFields) {
 					String imageName = spec.get(imageField.getName());
-					Image image = images.get(imageName);
-					if (image == null) {
-						LOGGER.debug("getting offset for {}", imageName);
-						XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
-
-						
-						String templateName = piecesDoc.ensureTemplate(imageName);
-						image = new Image(imageName, templateName, offset);
+					if (imageName.equals("")) {
+						imageField.setSpecific(null);
+					} else {
+    					Image image = images.get(imageName);
+    					if (image == null) {
+    						LOGGER.debug("getting offset for {}", imageName);
+    						XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
+    
+    						
+    						String templateName = piecesDoc.ensureTemplate(imageName);
+    						image = new Image(imageName, templateName, offset);
+    					}
+    					imageField.setSpecific(image);
+    
+    					imageTally.increment(imageName, number);
 					}
-					imageField.setSpecific(image);
-
-					imageTally.increment(imageName, number);
 				}
 				Map<String, Integer> incrementers = new HashMap<>();
 				for (String incrementer : incrementingFields) {
@@ -279,14 +281,15 @@ public class PieceMakerMainBox {
 					        backColour);
 
 					for (ImageField imageField : imageFields) {
-						
-						XYcoords offset = location.add(imageField.getCurrentOffset());
-						Element pic = piecesDoc.addCloneOfTemplate(outputLayer, imageField.getTemplateName(), offset.getX(),
-						        offset.getY());
-						pic.setAttribute("fill", foreColours.get(imageField.getColourChoice()));
-
-						pic.setAttribute("transform", transformStart + Float.toString(offset.getX() * antiScale) + ","
-						        + Float.toString(offset.getY() * antiScale) + ")");
+						if (imageField.hasCurrentImage()) {
+    						XYcoords offset = location.add(imageField.getCurrentOffset());
+    						Element pic = piecesDoc.addCloneOfTemplate(outputLayer, imageField.getTemplateName(), offset.getX(),
+    						        offset.getY());
+    						pic.setAttribute("fill", foreColours.get(imageField.getColourChoice()));
+    
+    						pic.setAttribute("transform", transformStart + Float.toString(offset.getX() * antiScale) + ","
+    						        + Float.toString(offset.getY() * antiScale) + ")");
+						}
 					}
 					for (TextField tf : textFields) {
 						String name = tf.getName();
@@ -364,17 +367,19 @@ public class PieceMakerMainBox {
 		
 		for (ImageField imageField : imageFields) {
 			String imageName = spec.get(imageField.getName());
-			Image image = images.get(imageName);
-			if (image == null) {
-				XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
-
-				
-				String templateName = piecesDoc.ensureTemplate(imageName);
-				image = new Image(imageName, templateName, offset);
+			if (! imageName.equals("")) {
+    			Image image = images.get(imageName);
+    			if (image == null) {
+    				XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
+    
+    				
+    				String templateName = piecesDoc.ensureTemplate(imageName);
+    				image = new Image(imageName, templateName, offset);
+    			}
+    			imageField.setSpecific(image);
+    
+    			imageTally.increment(imageName);
 			}
-			imageField.setSpecific(image);
-
-			imageTally.increment(imageName);
 		}
 
 		
@@ -415,6 +420,10 @@ public class PieceMakerMainBox {
 			name = defn.get(FIELD_NAME_COL);
 			this.boxNamePattern = defn.get(PieceMakerMainBox.FIELD_PARENTBOX_COL);
 			this.colourChoice = defn.get("colour") != null ? defn.get("colour") : "fore";
+		}
+
+		public boolean hasCurrentImage() {
+			return currentImage != null;
 		}
 
 		public String getBoxName(String imageName) {
@@ -633,6 +642,9 @@ public class PieceMakerMainBox {
 
 	public static int getAsInteger( String key, Map<String, String> spec ) {
 		String asString = spec.get(key);
+		if (asString.equals("")) {
+			return 0;
+		}
 		try {
 			return Integer.parseInt(asString);
 		} catch (NumberFormatException e) {

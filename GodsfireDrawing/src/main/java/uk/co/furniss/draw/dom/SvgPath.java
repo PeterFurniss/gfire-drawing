@@ -479,7 +479,7 @@ public class SvgPath extends SvgObject {
 		Dattribute dAsReceived = new Dattribute();
 
 		Dbuilder dRelative = new Dbuilder();
-//		LOGGER.debug("d as received {} ", dAsReceived);
+		LOGGER.debug("d for {} as received {} ", getId(), dAsReceived);
 		// this assumes the commands and their parameters are separated by spaces (which
 		// is what
 		// inkscape does. svg allows all sorts of variations
@@ -492,8 +492,8 @@ public class SvgPath extends SvgObject {
 		XYcoords currentAbsolute = dAsReceived.nextPair();
 		XYcoords start = currentAbsolute;
 		dRelative.add(start);
-		// default to line after a move
-		cmd = "l";
+		// default to line after a move, but of the same kind
+		cmd = cmd.equals("M") ? "L" : "l";
 
 		XYcoords point = new XYcoords(0.0f, 0.0f);
 		boolean lastZ = false;
@@ -609,8 +609,8 @@ public class SvgPath extends SvgObject {
 
 				case "A": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
 				          // destinatioin (x,y)
-					dRelative.add(dAsReceived.nextPair().subtract(currentAbsolute));
-					dRelative.copy(dAsReceived, 3);
+//					dRelative.add(dAsReceived.nextPair().subtract(currentAbsolute));
+					dRelative.copy(dAsReceived, 5);
 					point = dAsReceived.nextPair().subtract(currentAbsolute);
 					dRelative.add(point);
 					break;
@@ -618,15 +618,15 @@ public class SvgPath extends SvgObject {
 					throw new IllegalStateException(
 					        "unsupported absolute path command " + cmd + " from " + dAsReceived);
 				}
-//				LOGGER.debug("before cmd {} abs was {}", cmd, currentAbsolute);
+				LOGGER.debug("before cmd {} abs was {}", cmd, currentAbsolute);
 				currentAbsolute = currentAbsolute.add(point);
-//				LOGGER.debug("after cmd " + cmd + " rel XY is {}, current abs is {}", point, currentAbsolute);
+				LOGGER.debug("after cmd " + cmd + " rel XY is {}, current abs is {}", point, currentAbsolute);
 			}
-//			LOGGER.debug("after cmd " + cmd + " rel XY is {}, current abs is {}", point, currentAbsolute);
+			LOGGER.debug("after cmd " + cmd + " rel XY is {}, current abs is {}", point, currentAbsolute);
 			lastZ = cmd.equalsIgnoreCase("z");
 		}
 		if (changed) {
-//			LOGGER.debug("d made relative {}", dRelative.getD());
+			LOGGER.debug("d for {} made relative {}", getId(), dRelative.getD());
 			element.setAttribute("d", dRelative.getD());
 		}
 
