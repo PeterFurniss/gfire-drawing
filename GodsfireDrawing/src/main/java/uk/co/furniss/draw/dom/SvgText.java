@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import uk.co.furniss.draw.piecemaker.Justification;
+
 /**
  * manipulation class for an <svg:text> element.
  * 		only used (currently) for attribute and position interrogation.
@@ -25,6 +27,7 @@ public class SvgText extends SvgObject {
 	private  String style;
 	private  String content;
 	private  Orientation rotation;
+	private Justification alignment;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SvgText.class.getName());
 	
@@ -59,14 +62,15 @@ public class SvgText extends SvgObject {
 			while (mstyle.find()) {
 				String key = mstyle.group(1);
 				String value = mstyle.group(2);
-				if (! value.equals(styling.get(key))) {
-					LOGGER.warn("tspan styling for {} differs - text {}, tspan " + value, key, styling.get(key));
+				if (! value.equals(styling.get(key)) && styling.get(key) != null  && ! key.contains("inkscape")) {
+					LOGGER.info("tspan styling for {} differs - text {}, tspan " + value, key, styling.get(key));
 					styling.put(key,  value);
 
 				}
 			}
 			
 		}
+		alignment = Justification.fromAlignment(styling.get("text-align"));
 		LOGGER.debug("styling {}", styling);
 	}
 
@@ -174,11 +178,13 @@ public class SvgText extends SvgObject {
 	}
 
 	public String getFontMod() {
-		
 		return styling.get("font-style") + "/" + styling.get("font-weight");
-		
 	}
 
+	public Justification getAlignment() {
+		return alignment;
+	}
+	
 	public Orientation getRotation() {
 		return rotation;
 	}

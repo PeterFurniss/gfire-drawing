@@ -195,54 +195,10 @@ public class PiecesDocument {
     			textElement.setAttribute("font-style", "italic");
     		}
     	}
-		// x, y apply to the centre of the text
-		final String anchor;
-		switch (justification) {
-		case N:
-		case C:
-		case S:
-			anchor = "middle";
-			break;
-		case NE:
-		case E:
-		case SE:
-			anchor = "end";
-			break;
-		case NW:
-		case W:
-		case SW:
-			anchor = "start";
-			break;
 
-		default:
-			anchor = "middle";
-			break;
-		}
-		textElement.setAttribute("text-anchor", anchor);
-		final String baseline;
-		switch (justification) {
-		case NW:
-		case N:
-		case NE:
-			baseline = "hanging";
-			break;
-		case W:
-		case C:
-		case E:
-			baseline = "middle";
-			break;
-		case SW:
-		case S:
-		case SE:
-			baseline = "baseline";
-			break;
-
-		default:
-			baseline = "middle";
-			break;
-		}
-		// TBD this one needs changing
-		textElement.setAttribute("dominant-baseline", baseline);
+		textElement.setAttribute("text-anchor", justification.getAnchor());
+		textElement.setAttribute("text-align", justification.getAlign());
+		textElement.setAttribute("dominant-baseline", "baseline");
 		textElement.setAttribute("x", Float.toString(xy.getX()));
 		textElement.setAttribute("y", Float.toString(xy.getY()));
 

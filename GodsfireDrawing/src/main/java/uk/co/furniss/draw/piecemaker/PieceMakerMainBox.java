@@ -41,7 +41,6 @@ public class PieceMakerMainBox {
 	private static final String FIELD_TYPE_COL = "type";
 	static final String FIELD_PARENTBOX_COL = "parentbox";
 	static final String FIELD_COLOURCHOICE_COL = "colour";
-	static final String FIELD_JUSTIFY_COL = "justify";
 
 	private static final String FIELD_INCREMENT_COL = "increment";
 	
@@ -149,7 +148,6 @@ public class PieceMakerMainBox {
 				FIELD_TYPE_COL,   // image, colour, text,number
 		        FIELD_PARENTBOX_COL, // surrounding box to define this image/textfield position
 		        FIELD_COLOURCHOICE_COL,  // which fore ground colour is this
-		        FIELD_JUSTIFY_COL, // which point of image/text to key on (N, NE, E ... or C)
 		        FIELD_INCREMENT_COL)); // this value is incremented for multiple pieces of same spec
 
 		fieldNames = fieldDefinitions.stream().map(c -> c.get(FIELD_NAME_COL)).collect(Collectors.toList());
@@ -409,7 +407,6 @@ public class PieceMakerMainBox {
 	private class ImageField {
 		private final String name;
 		private final String boxNamePattern;
-		private final Justification justification;
 		
 		private Image currentImage;
 		private final String colourChoice;
@@ -417,10 +414,7 @@ public class PieceMakerMainBox {
 		ImageField(Map<String, String> defn, String imageFile) {
 			name = defn.get(FIELD_NAME_COL);
 			this.boxNamePattern = defn.get(PieceMakerMainBox.FIELD_PARENTBOX_COL);
-
-			this.justification = Justification.valueOf(defn.get(PieceMakerMainBox.FIELD_JUSTIFY_COL).toUpperCase());
 			this.colourChoice = defn.get("colour") != null ? defn.get("colour") : "fore";
-
 		}
 
 		public String getBoxName(String imageName) {
@@ -436,7 +430,7 @@ public class PieceMakerMainBox {
 			}
 			LOGGER.debug("image {}", image);
 			LOGGER.debug("box   {}", box);
-			return findOffsetInBox(image, box, justification);
+			return findOffsetInBox(image, box);
 		}
 
 		
@@ -463,7 +457,7 @@ public class PieceMakerMainBox {
 
 	}
 	
-	public XYcoords findOffsetInBox( SvgObject image, SvgObject box , Justification justification) {
+	public XYcoords findOffsetInBox( SvgObject image, SvgObject box) {
 		XYcoords boxTL = box.getTopLeft();
 		LOGGER.debug("box {}, TL {}", box.getId(), boxTL);
 		XYcoords boxBR = box.getBottomRight();
@@ -477,47 +471,11 @@ public class PieceMakerMainBox {
 			&&	boxTL.getY() <= imageTL.getY()
 			&&	boxBR.getX() >= imageBR.getX()
 			&&	boxBR.getY() >= imageBR.getY() ) {
-			final float imageX;
-			final float imageY;
-			XYcoords imageCentre = image.getCentre();   // might not need this
-			switch (justification) {
-			case NW:
-			case W:
-			case SW:
-				imageX = imageTL.getX();
-				break;
-			case N:
-			case C:
-			case S:
-				imageX = imageCentre.getX();
-				break;
-			case NE:
-			case E:
-			case SE:
-				imageX = imageBR.getX();
-				break;
-			default:
-				throw new IllegalStateException("Invalid justification code " + justification);
-			}
-			switch (justification) {
-			case NW:
-			case N:
-			case NE:
-				imageY = imageTL.getY();
-				break;
-			case W:
-			case C:
-			case E:
-				imageY = imageCentre.getY();
-				break;
-			case SW:
-			case S:
-			case SE:
-				imageY = imageBR.getY();
-				break;
-			default:
-				throw new IllegalStateException("Invalid justification code " + justification);
-			}
+			final float imageX, imageY;
+			XYcoords imageCentre = image.getCentre();  	
+			imageX = imageCentre.getX();
+			imageY = imageCentre.getY();
+
 			return new XYcoords((imageX - boxTL.getX()) * scaling, (imageY - boxTL.getY()) * scaling);
 		} else {
 			throw new IllegalArgumentException("image "+ image.getId() + " is not inside its box");
@@ -551,15 +509,7 @@ public class PieceMakerMainBox {
 			// these will be "" due to behaviour of excel reading
 			fontfamily = model.getFontFamily();
 			fontmod = model.getFontMod();
-			Justification justifyRequest = Justification.valueOf(defn.get(FIELD_JUSTIFY_COL) != null ? defn.get(FIELD_JUSTIFY_COL).toUpperCase() : "C");
-
-			switch (justifyRequest) {
-			case NW: case W: case SW : justify = Justification.SW; break;
-			case N: case C: case S : justify = Justification.S; break;
-			case NE: case E: case SE : justify = Justification.SE; break;
-			default: throw new IllegalStateException("Unknown justification code " + justifyRequest);
-			}
-			
+			justify = model.getAlignment();
 			orientation = model.getRotation();
 			offset = determineOffset(defn.get(FIELD_PARENTBOX_COL), model);
 			String incrementStr = defn.get(FIELD_INCREMENT_COL);
