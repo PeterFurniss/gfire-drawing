@@ -108,7 +108,7 @@ public class ExcelBook {
 						throw new IllegalArgumentException("Header line had null cell when looking for " + colName);
 					} else if ( !colName.equals(cell.getStringCellValue())) {
 							throw new IllegalArgumentException("Mismatched header line, expected " + colName 
-									+ " but was " + cell == null ? "null" : cell.getStringCellValue());
+									+ " but was " + cell.getStringCellValue());
 					}
 				} else {
 					if (cell != null) {
