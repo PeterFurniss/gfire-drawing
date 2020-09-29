@@ -25,7 +25,7 @@ import uk.co.furniss.xlsx.ExcelBook;
  * numbers, which silhouette and colours (that will take som designing). piece
  * silhouette is an image from an input svg file. object has a specific name
  */
-public class PieceMakerMainBox {
+public class PieceMakerMainBox implements SvgWriter {
 
 	private static final String PARAM_DEFNID = "defnid";
 	private static final String PARAM_FIELDSHEET = "fieldsheet";
@@ -64,23 +64,7 @@ public class PieceMakerMainBox {
 		}
 		specFileName = args[0];
 		game = args[1];
-//		if (game.equals("gf")) {
-//			directory = "c:/Users/Peter/Documents/games/piece_maker/godsfire/";
-//			specFileName = "gf_spec";
-//			specSheetName = "new_param";
-//		} else if (game.equals("bk")) {
-//
-//			directory = "c:/Users/Peter/Documents/games/piece_maker/barbkings/";
-//			specFileName = "bk_spec";
-//			specSheetName = "bk_spec";
-//		} else if (game.equals("rc")) {
-//
-//			directory = "c:/Users/Peter/Documents/games/piece_maker/russiancampaign/";
-//			specFileName = "rc_spec";
-//			specSheetName = "param";
-//		} else {
-//			throw new IllegalArgumentException("Which game are making pieces for ?  we have" + game);
-//		}
+
 		String fullSpecFileName = new File(specFileName).getAbsolutePath().replaceAll("\\\\","/");
 		
 		String specFileDirectory = fullSpecFileName.replaceFirst("/[^/]*$","");
@@ -119,11 +103,10 @@ public class PieceMakerMainBox {
 			parameters.put(PARAM_DIRECTORY, dir.replaceFirst(".", specFileDirectory));
 		}
 		
-		PieceMakerMainBox instance = new PieceMakerMainBox(parameters, tbook, testing);
+		SvgWriter instance = new PieceMakerMainBox(parameters, tbook, testing);
 
 	}
 
-	private final Map<String, String> parameters;
 	private final String imageFile;
 	private final PiecesDocument piecesDoc;
 	private final float pieceSpacing;
@@ -134,11 +117,10 @@ public class PieceMakerMainBox {
 	private List<String> fieldNames;
 	private final float scaling;
 	private final List<String> colourChoices = new ArrayList<>();
+	private Element outputLayer;
 
 	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook, boolean testing ) {
-		
-		this.parameters = parameters;
-		
+			
 		String defnSheet = parameters.get(PARAM_FIELDSHEET);
 
 		List<Map<String, String>> fieldDefinitions = tbook.readCellsAsStrings(defnSheet, Arrays.asList(
@@ -199,9 +181,8 @@ public class PieceMakerMainBox {
 			default:
 				throw new IllegalArgumentException("Unrecognised field type " + type + " for " + name);
 			}
-
-
 		}
+
 		List<String> incrementingFields = textFields.stream().filter(TextField::isIncrement).map(TextField::getName)
 		        .collect(Collectors.toList());
 
@@ -209,6 +190,12 @@ public class PieceMakerMainBox {
 		int colsPerRow = columnsPerRow(gap);
 		int rowsPerPage = (int) ( ( PAGE_HEIGHT - 2 * ( MARGIN - gap ) ) / pieceSpacing ) - 1;
 
+		drawPieces(parameters, tbook, testing, pieceSize, gap, incrementingFields, colsPerRow, rowsPerPage);
+		piecesDoc.writeToFile(parameters.get(PARAM_DIRECTORY) + "/" + outName + SVG_SUFFIX);
+	}
+
+	public void drawPieces( Map<String, String> parameters, ExcelBook tbook, boolean testing, float pieceSize,
+	        float gap, List<String> incrementingFields, int colsPerRow, int rowsPerPage ) {
 		String transformStart = "matrix(" + Float.toString(scaling) + ",0,0," + Float.toString(scaling) + ",";
 		float antiScale = 1.0f - scaling;
 
@@ -220,11 +207,12 @@ public class PieceMakerMainBox {
 			foreColours.put(choice, "green");
 		}
 		String oldBack = "black";
-		int row = 0;
-		int col = 0;
-		int page = 1;
-
-		Element outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(page));
+		PageArranger pageArranger = new FullPage(pieceSize, gap);
+		pageArranger.start(this);
+//		int col = 0;
+//		int page = 1;
+//
+//		outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(page));
 		Map<String, Image> images = new HashMap<>();
 		
 		for (Map<String, String> spec : specs) {
@@ -273,9 +261,12 @@ public class PieceMakerMainBox {
 				for (int item = 0; item < number; item++) {
 
 					// topleft of piece
-					float x = MARGIN + col * pieceSpacing;
-					float y = MARGIN + row * pieceSpacing;
-					XYcoords location = new XYcoords(x, y);
+					XYcoords location = pageArranger.getNextLocation();
+					float x = location.getX();
+					float y = location.getY();
+//					float x = MARGIN + col * pieceSpacing;
+//					float y = MARGIN + row * pieceSpacing;
+//					XYcoords location = new XYcoords(x, y);
 					// do the background
 					piecesDoc.makeRectangle(outputLayer, x - gap * 0.5f, y - gap * 0.5f, pieceSpacing, pieceSpacing,
 					        backColour);
@@ -312,37 +303,48 @@ public class PieceMakerMainBox {
 							        tf.getJustification(), tf.getOrientation());
 						}
 					}
-					col++;
-					if (col > colsPerRow) {
-						row++;
-						col = 0;
-						if (row > rowsPerPage) {
-							drawFiducialLines( gap, row - 1, outputLayer);
-							row = 0;
-							page++;
-							outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(page));
-						}
-					}
+//					col++;
+//					if (col > colsPerRow) {
+//						row++;
+//						col = 0;
+//						if (row > rowsPerPage) {
+//							drawFiducialLines( gap, row - 1, outputLayer);
+//							row = 0;
+//							page++;
+//							outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(page));
+//						}
+//					}
 					totalPieces++;
 				}
 			}
 		}
 
 		if (!testing) {
+			pageArranger.finish();
 			// now some lines round the pieces
-			drawFiducialLines(gap, row, outputLayer);
+//			drawFiducialLines(gap, row, outputLayer);
 
 			for (Map.Entry<String, Integer> tally : imageTally.getCounts().entrySet()) {
 				System.out.println("   " + tally.getValue() + " of " + tally.getKey());
 
 			}
 			System.out
-			        .println("Created " + page + " pages of " + totalPieces + " pieces with size " + pieceSize + "mm");
+			        .println("Created " + pageArranger.getPageCount() + " pages of " + totalPieces + " pieces with size " + pieceSize + "mm");
 			piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);
 		}
-		piecesDoc.writeToFile(parameters.get(PARAM_DIRECTORY) + "/" + outName + SVG_SUFFIX);
 	}
 
+	@Override
+	public PiecesDocument getOutputDocument() {
+		return piecesDoc;
+	}
+
+
+	@Override
+	public void setOutputLayer(Element outputLayer) {
+		this.outputLayer = outputLayer;
+	}
+	
 	public int columnsPerRow( float gap ) {
 		return (int) ( ( PAGE_WIDTH - 2 * ( MARGIN - gap ) ) / pieceSpacing ) - 1;
 	}
