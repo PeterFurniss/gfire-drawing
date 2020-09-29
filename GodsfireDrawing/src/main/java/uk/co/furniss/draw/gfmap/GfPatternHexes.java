@@ -4,6 +4,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 import uk.co.furniss.draw.dom.XPathUtil;
@@ -19,6 +21,7 @@ public class GfPatternHexes {
 	private final List<XYcoords> hexCorners;
 	private final float hexHeight;
 	
+	private static final Logger LOGGER = LoggerFactory.getLogger(GfPatternHexes.class.getName());
 	public float getHexHeight() {
 		return hexHeight;
 	}
@@ -43,7 +46,7 @@ public class GfPatternHexes {
 		Element hex = patternHexes.get(HexColour.BLUE).getElement();
 		Element path = XPU.findElement(hex, "path[1]");
 		this.hexCorners = GfMapBuilder.getPathCoords(path);
-		System.out.println(hexCorners);
+		LOGGER.debug("corners of pattern hex {}", hexCorners);
 		XYcoords max = XYcoords.maxXY(hexCorners);
 		hexHeight = max.getY();
 		hexWidth = max.getX();

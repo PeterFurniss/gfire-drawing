@@ -42,27 +42,39 @@ public class GfMap {
         }
         // do the line links between hexes of same colour
 		svg.addComment("linking lines between hexes of the same colour");
+		int direction;
      	for (int row = 0; row < maxRows; row++) {
      		int odd = row % 2;
     		for (int col = 0; col < maxCols; col++) {
     			
     			// east
     			if (col < maxCols-1) {
-	    			svg.addLink(HexColour.RED, row, col, row, col+1, 5);
-	    			svg.addLink(HexColour.GREEN, row, col, row, col+1, 5);
-	    			svg.addLink(HexColour.BLUE, row, col, row, col+1, 5);
+    				direction = 5;
+    				svg.addLink(HexColour.RED, row, col, row, col+1, direction);
+	    			svg.addLink(HexColour.GREEN, row, col, row, col+1, direction);
+	    			svg.addLink(HexColour.BLUE, row, col, row, col+1, direction);
     			}
     			// northeast
-    			if (row > 0) {
-    				svg.addLink(HexColour.RED,   row, col, row-1, col+odd, 4);
-        			svg.addLink(HexColour.GREEN, row, col, row-1, col+1-odd, 4);
-       				svg.addLink(HexColour.BLUE,  row, col, row-1, col+odd, 4);
+    			if (row > 0 ) {
+    				direction = 4;
+    				if (col + odd < maxCols) {
+    					svg.addLink(HexColour.RED,   row, col, row-1, col+odd, direction);
+            			svg.addLink(HexColour.BLUE,  row, col, row-1, col+odd, direction);
+    				}
+    				if (col - odd + 1 < maxCols) {
+    					svg.addLink(HexColour.GREEN, row, col, row-1, col+1-odd, direction);
+    				}
        			}  		
     			//southeast
     			if (row < maxRows-1) {
-	    			svg.addLink(HexColour.RED, row, col, row+1, col+odd, 0);
-	    			svg.addLink(HexColour.GREEN, row, col, row+1, col+1-odd, 0);
-	    			svg.addLink(HexColour.BLUE, row, col, row+1, col + odd, 0);
+    				direction = 0;
+    				if (col + odd < maxCols) {
+    	    			svg.addLink(HexColour.RED, row, col, row+1, col+odd, direction);
+    	    			svg.addLink(HexColour.BLUE, row, col, row+1, col + odd, direction);
+    				}
+    				if ( col + 1 - odd < maxCols) {
+    					svg.addLink(HexColour.GREEN, row, col, row+1, col+1-odd, direction);
+    				}
     			}
 
         		

@@ -3,6 +3,8 @@ package uk.co.furniss.draw.gfmap;
 import java.util.EnumMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 import uk.co.furniss.draw.dom.SVGbuilder;
@@ -24,6 +26,9 @@ public class GfMapBuilder extends SVGbuilder {
 	private final float xNumber;
 	private final float yNumber;
 	private final GfPatternHexes patterns;
+	
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(GfMapBuilder.class.getName());
 
 	/**
 	 * build godsfire 3-d map

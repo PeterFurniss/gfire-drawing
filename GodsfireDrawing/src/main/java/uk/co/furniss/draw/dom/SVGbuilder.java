@@ -8,6 +8,8 @@ import java.util.stream.Collectors;
 
 import javax.xml.XMLConstants;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -19,6 +21,8 @@ public class SVGbuilder {
 	
 	protected final Element svgDoc;
 	Document parentDocument;
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(SVGbuilder.class.getName());
 	
 	public SVGbuilder(Element docElement) {
 		this.svgDoc = docElement;
@@ -33,19 +37,21 @@ public class SVGbuilder {
 	// get the points of the path (not necessarily the bounds in the case of curves
 	public static List<XYcoords> getPathCoords( Element pathElement ) {
 		String dString = pathElement.getAttribute("d");
+		LOGGER.debug("hex pattern path {}", dString);
 		String [] pieces = dString.split("\\s+");
 		List<XYcoords> answer = new ArrayList<>(pieces.length - 2);
 		// this assumes the commands and their parameters are separated by spaces (which is what
 		// inkscape does. svg allows all sorts of variations
 		// special case the begining
 		String cmd = pieces[0];
-		if (! cmd.equals("m")) {
+		if (! cmd.equalsIgnoreCase("m")) {
 			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
 		}
 		XYcoords start = new XYcoords(pieces[1]);
 		
 		// need to have a back value for 
 		XYcoords point = start;
+		answer.add(point);
 		cmd = "l";
 		
 		for (int i = 2; i < pieces.length ; i++) {
@@ -69,6 +75,7 @@ public class SVGbuilder {
 				point = new XYcoords(point.getX(), Float.parseFloat(pieces[i]));
 				break;
 			case "z":
+			case "Z":
 				// does nothing for the coordinates - can't guarantee it's the last, so repeat the first
 				point = answer.get(0);
 				break;
@@ -91,11 +98,11 @@ public class SVGbuilder {
 					// how far have we come (in X) from the beginning
 					float dx = answer.stream().map(XYcoords::getX).reduce(0.0f, (s, x) -> s + x);
 					float relX = Float.parseFloat(pieces[i]) - ( start.getX() + dx );
-					System.out.println("From " + start + " H of " + pieces[i] + ", dx seems to be " + dx + " so relX is " + relX);
+					LOGGER.debug("From {}  H of {}, dx seems to be " + dx + " so relX is " + relX, start, pieces[i]);
 					point = new XYcoords(relX, point.getY());
 					break;
 			default:
-				System.out.println("unsupported path command " + cmd);
+				LOGGER.warn("unsupported path command {}", cmd);
 				break;
 			}
 
