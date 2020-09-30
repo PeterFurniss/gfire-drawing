@@ -28,6 +28,7 @@ public class GfMapBuilder extends SVGbuilder {
 	private final GfPatternHexes patterns;
 	
 	
+	@SuppressWarnings("unused")
 	private static final Logger LOGGER = LoggerFactory.getLogger(GfMapBuilder.class.getName());
 
 	/**

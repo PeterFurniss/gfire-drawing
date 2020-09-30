@@ -29,9 +29,23 @@ import uk.co.furniss.xlsx.ExcelBook;
  */
 public class PieceMakerMainBox implements SvgWriter {
 
+	private static final String BACKGROUND_COLOUR_FIELD_NAME = "back";
+
+	private static final String TYPE_TEXT = "text";
+
+	private static final String TYPE_IMAGE = "image";
+
+	private static final String TYPE_COLOUR = "colour";
+
+	private static final String TYPE_NUMBER = "number";
+
+	private static final String PARAMETER_SHEET_NAME = "param";
+	
+	// the coloumns of the parameter sheet
 	private static final String PARAM_DEFNID = "defnid";
 	private static final String PARAM_FIELDSHEET = "fieldsheet";
 	private static final String PARAM_SPECSHEET = "specsheet";
+	private static final String PARAM_DIRECTORY = "directory";
 	private static final String PARAM_OUTPUTFILE = "outputfile";
 	private static final String PARAM_IMAGEFILE = "imagefile";
 	private static final String PARAM_IMAGELAYER = "imagelayer";
@@ -40,27 +54,20 @@ public class PieceMakerMainBox implements SvgWriter {
 	private static final String PARAM_GAP = "gap";
 	private static final String PARAM_PAPER = "paper";
 	
+	// the columns of a field definition sheet
 	private static final String FIELD_NAME_COL = "field";
 	private static final String FIELD_TYPE_COL = "type";
-	static final String FIELD_PARENTBOX_COL = "parentbox";
-	static final String FIELD_COLOURCHOICE_COL = "colour";
-
+	private static final String FIELD_PARENTBOX_COL = "parentbox";
+	private static final String FIELD_COLOURCHOICE_COL = TYPE_COLOUR;
 	private static final String FIELD_INCREMENT_COL = "increment";
 	
-	private static final float PAGE_WIDTH = 210.0f;
-	private static final float PAGE_HEIGHT = 297.0f;
-	private static final String OUTPUT_LAYER_BASE_NAME = "output";
-	private static final String FIRST_OUTPUT_LAYER = OUTPUT_LAYER_BASE_NAME + "1";
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(PieceMakerMainBox.class.getName());
 	private static final String SVG_SUFFIX = ".svg";
-	private static final String PARAM_DIRECTORY = "directory";
 
 	public static void main( String[] args ) throws FileNotFoundException {
 		final String specFileName;
-		final String specSheetName = "param";
+		final String specSheetName = PARAMETER_SHEET_NAME;
 		final String game;
-		boolean testing = false;
 
 		if (args.length != 2) {
 			throw new IllegalArgumentException("two arguments required - filename of spec sheet, game identifier");
@@ -107,28 +114,76 @@ public class PieceMakerMainBox implements SvgWriter {
 			parameters.put(PARAM_DIRECTORY, dir.replaceFirst(".", specFileDirectory));
 		}
 		
-		SvgWriter instance = new PieceMakerMainBox(parameters, tbook, testing);
+		PieceMakerMainBox instance = new PieceMakerMainBox(parameters, tbook);
 
+		instance.drawPieces();
+		instance.writeOutputSvg();
 	}
 
+	private final ExcelBook tbook;
+	
 	private final String imageFile;
 	private final PiecesDocument piecesDoc;
+
+	private float pieceSize;
 	private final float pieceSpacing;
+	private final float scaling;
+	private List<String> fieldNames;
 	private final List<ImageField> imageFields = new ArrayList<>();
 	private final List<TextField> textFields = new ArrayList<>();
 	private final TallyCounter imageTally = new TallyCounter();
-	private static final float MARGIN = 10.0f;
-	private List<String> fieldNames;
-	private final float scaling;
 	private final List<String> colourChoices = new ArrayList<>();
 	private Element outputLayer;
 	private final PageArranger pageArranger;
-	
-	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook, boolean testing ) {
-			
-		String defnSheet = parameters.get(PARAM_FIELDSHEET);
 
-		List<Map<String, String>> fieldDefinitions = tbook.readCellsAsStrings(defnSheet, Arrays.asList(
+	private float gapBetweenPieces;
+
+	private String specSheetName;
+
+	private String outputFilePath;
+
+	
+	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook ) {
+		this.tbook = tbook;	
+		String fieldSheetName = parameters.get(PARAM_FIELDSHEET);
+		specSheetName = parameters.get(PARAM_SPECSHEET);
+		
+		String directoryName = parameters.get(PARAM_DIRECTORY);
+		imageFile = directoryName + "/" + parameters.get(PARAM_IMAGEFILE) + SVG_SUFFIX;
+		System.out.println("Will read image file " + imageFile);
+
+		piecesDoc = new PiecesDocument(imageFile);
+
+		piecesDoc.setLibraryLayer(parameters.get(PARAM_IMAGELAYER));
+		
+		float imageDefinitionSize = Float.parseFloat(parameters.get(PARAM_IMAGESIZE));
+		pieceSize = Float.parseFloat(parameters.get(PARAM_PIECESIZE));
+
+		scaling = pieceSize / imageDefinitionSize;
+		gapBetweenPieces = Float.parseFloat(parameters.get(PARAM_GAP));
+		pieceSpacing = pieceSize + gapBetweenPieces;
+
+		String paperType = parameters.get(PARAM_PAPER);
+		Pattern labelCracker = Pattern.compile("label(\\d*)");
+		Matcher matchLabel  = labelCracker.matcher(paperType);
+		if (paperType.equalsIgnoreCase("A4")) {
+			pageArranger = new FullPage(pieceSize, gapBetweenPieces);
+		} else if (matchLabel.matches()) {
+			if (matchLabel.group(1).equals("")) {
+				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces);
+			} else {
+				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces, Integer.parseInt(matchLabel.group(1)));
+			}
+		} else {
+			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
+					+ "where # is the first label to be used (1..21)");
+		}
+		
+		outputFilePath = directoryName + "/" + parameters.get(PARAM_OUTPUTFILE)  + SVG_SUFFIX;
+
+		
+
+		List<Map<String, String>> fieldDefinitions = tbook.readCellsAsStrings(fieldSheetName, Arrays.asList(
 				FIELD_NAME_COL, // columns of the spec  sheet
 				FIELD_TYPE_COL,   // image, colour, text,number
 		        FIELD_PARENTBOX_COL, // surrounding box to define this image/textfield position
@@ -136,41 +191,14 @@ public class PieceMakerMainBox implements SvgWriter {
 		        FIELD_INCREMENT_COL)); // this value is incremented for multiple pieces of same spec
 
 		fieldNames = fieldDefinitions.stream().map(c -> c.get(FIELD_NAME_COL)).collect(Collectors.toList());
-
-		imageFile = parameters.get(PARAM_DIRECTORY) + "/" + parameters.get(PARAM_IMAGEFILE) + SVG_SUFFIX;
-		System.out.println("Will read image file " + imageFile);
-
-		piecesDoc = new PiecesDocument(imageFile);
-
-		// where are the prototype images ?  - do we really need this ?
-		piecesDoc.setLibraryLayer(parameters.get(PARAM_IMAGELAYER));
-
-		float imageDefinitionSize = Float.parseFloat(parameters.get(PARAM_IMAGESIZE));
-		float pieceSize = Float.parseFloat(parameters.get(PARAM_PIECESIZE));
-
-		scaling = pieceSize / imageDefinitionSize;
-		float gap = Float.parseFloat(parameters.get(PARAM_GAP));
-		pieceSpacing = pieceSize + gap;
-
-		String paperType = parameters.get(PARAM_PAPER);
-		Pattern labelCracker = Pattern.compile("label(\\d*)");
-		Matcher matchLabel  = labelCracker.matcher(paperType);
-		if (paperType.equalsIgnoreCase("A4")) {
-			pageArranger = new FullPage(pieceSize, gap);
-		} else if (matchLabel.matches()) {
-			if (matchLabel.group(1).equals("")) {
-				pageArranger = new LabelArranger(pieceSize, gap);
-			} else {
-				pageArranger = new LabelArranger(pieceSize, gap, Integer.parseInt(matchLabel.group(1)));
-			}
-		} else {
-			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
-					+ "where # is the first label to be used (1..21)");
-		}
 		
-		// saving this for later
-		String outName = parameters.get(PARAM_OUTPUTFILE);
+		organiseFields(fieldDefinitions);
 
+	}
+
+
+	
+	public void organiseFields( List<Map<String, String>> fieldDefinitions ) {
 		// organise the text and image fields.  
 		//    image fields are questions of where
 		//    text fields are all the attribues of the text except its content
@@ -183,42 +211,38 @@ public class PieceMakerMainBox implements SvgWriter {
 			}
 			String type = fieldDefn.get(FIELD_TYPE_COL);
 			switch (type) {
-			case "number":
+			case TYPE_NUMBER:
 				// nothing to set up
 				break;
-			case "colour":
-				if (name.equals("back")) {
+			case TYPE_COLOUR:
+				if (name.equals(BACKGROUND_COLOUR_FIELD_NAME)) {
 					// nothing to do
 				} else {
 					colourChoices.add(name);
 				}
 				break;
-			case "image":
+			case TYPE_IMAGE:
 				imageFields.add(new ImageField(fieldDefn, imageFile));
 				break;
-			case "text":
+			case TYPE_TEXT:
 				textFields.add(new TextField(fieldDefn));
 				break;
 			default:
 				throw new IllegalArgumentException("Unrecognised field type " + type + " for " + name);
 			}
 		}
+	}
 
+	public void drawPieces( ) {
+		
 		List<String> incrementingFields = textFields.stream().filter(TextField::isIncrement).map(TextField::getName)
 		        .collect(Collectors.toList());
 
-
-
-		drawPieces(parameters, tbook, testing, pieceSize, gap, incrementingFields);
-		piecesDoc.writeToFile(parameters.get(PARAM_DIRECTORY) + "/" + outName + SVG_SUFFIX);
-	}
-
-	public void drawPieces( Map<String, String> parameters, ExcelBook tbook, boolean testing, float pieceSize,
-	        float gap, List<String> incrementingFields ) {
 		String transformStart = "matrix(" + Float.toString(scaling) + ",0,0," + Float.toString(scaling) + ",";
 		float antiScale = 1.0f - scaling;
 
-		List<Map<String, String>> specs = tbook.readCellsAsStrings(parameters.get(PARAM_SPECSHEET), fieldNames);
+		
+		List<Map<String, String>> specs = tbook.readCellsAsStrings(specSheetName, fieldNames);
 		int totalPieces = 0;
 		Map<String, String> foreColours = new HashMap<>();
 		for (String choice : colourChoices) {
@@ -231,11 +255,8 @@ public class PieceMakerMainBox implements SvgWriter {
 		Map<String, Image> images = new HashMap<>();
 		
 		for (Map<String, String> spec : specs) {
-			if (testing) {
 
-				doTestOutput(spec);
-			} else {
-				int number = getAsInteger("number", spec);
+				int number = getAsInteger(TYPE_NUMBER, spec);
 				for (ImageField imageField : imageFields) {
 					String imageName = spec.get(imageField.getName());
 					if (imageName.equals("")) {
@@ -267,7 +288,7 @@ public class PieceMakerMainBox implements SvgWriter {
 					}
 				}
 
-				String backColour = spec.get("back");
+				String backColour = spec.get(BACKGROUND_COLOUR_FIELD_NAME);
 				if (backColour.equals("")) {
 					backColour = oldBack;
 				}
@@ -281,7 +302,7 @@ public class PieceMakerMainBox implements SvgWriter {
 					float y = location.getY();
 
 					// do the background
-					piecesDoc.makeRectangle(outputLayer, x - gap * 0.5f, y - gap * 0.5f, pieceSpacing, pieceSpacing,
+					piecesDoc.makeRectangle(outputLayer, x - gapBetweenPieces * 0.5f, y - gapBetweenPieces * 0.5f, pieceSpacing, pieceSpacing,
 					        backColour);
 
 					for (ImageField imageField : imageFields) {
@@ -319,10 +340,9 @@ public class PieceMakerMainBox implements SvgWriter {
 
 					totalPieces++;
 				}
-			}
+			
 		}
 
-		if (!testing) {
 			pageArranger.finish();
 
 			for (Map.Entry<String, Integer> tally : imageTally.getCounts().entrySet()) {
@@ -331,10 +351,15 @@ public class PieceMakerMainBox implements SvgWriter {
 			}
 			System.out
 			        .println("Created " + pageArranger.getPageCount() + " pages of " + totalPieces + " pieces with size " + pieceSize + "mm");
-			piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);
-		}
+		
 	}
 
+
+	public void writeOutputSvg(  ) {
+		piecesDoc.writeToFile(outputFilePath);
+	}
+
+	
 	@Override
 	public PiecesDocument getOutputDocument() {
 		return piecesDoc;
@@ -345,48 +370,7 @@ public class PieceMakerMainBox implements SvgWriter {
 	public void setOutputLayer(Element outputLayer) {
 		this.outputLayer = outputLayer;
 	}
-	
-	public int columnsPerRow( float gap ) {
-		return (int) ( ( PAGE_WIDTH - 2 * ( MARGIN - gap ) ) / pieceSpacing ) - 1;
-	}
 
-	public void doTestOutput( Map<String, String> spec ) {
-		
-//		for (ImageField imageField : imageFields) {
-//			String imageName = spec.get(imageField.getName());
-//			if (!imageTally.knownKey(imageName)) {
-//				SvgObject image = piecesDoc.findSvgObject(imageName);
-//				if (image == null) {
-//					throw new IllegalArgumentException("Cannot find image " + imageName + " in image file");
-//				}
-//
-//				imageTally.increment(imageName);
-//			}
-//		}
-		Map<String, Image> images = new HashMap<>();
-
-//		SvgObject boxOne = piecesDoc.findSvgObject("box_sqd1");
-//		XYcoords testLocation = new XYcoords(40.0f, 40.0f);
-		
-		for (ImageField imageField : imageFields) {
-			String imageName = spec.get(imageField.getName());
-			if (! imageName.equals("")) {
-    			Image image = images.get(imageName);
-    			if (image == null) {
-    				XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
-    
-    				
-    				String templateName = piecesDoc.ensureTemplate(imageName);
-    				image = new Image(imageName, templateName, offset);
-    			}
-    			imageField.setSpecific(image);
-    
-    			imageTally.increment(imageName);
-			}
-		}
-
-		
-	}
 
 	private class Image {
 		final String imageName;
@@ -422,7 +406,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		ImageField(Map<String, String> defn, String imageFile) {
 			name = defn.get(FIELD_NAME_COL);
 			this.boxNamePattern = defn.get(PieceMakerMainBox.FIELD_PARENTBOX_COL);
-			this.colourChoice = defn.get("colour") != null ? defn.get("colour") : "fore";
+			this.colourChoice = defn.get(TYPE_COLOUR) != null ? defn.get(TYPE_COLOUR) : "fore";
 		}
 
 		public boolean hasCurrentImage() {
@@ -526,7 +510,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			offset = determineOffset(defn.get(FIELD_PARENTBOX_COL), model);
 			String incrementStr = defn.get(FIELD_INCREMENT_COL);
 			increment = incrementStr != null && incrementStr.equalsIgnoreCase("TRUE");
-			colourChoice = defn.get("colour") != null ? defn.get("colour") : "fore";
+			colourChoice = defn.get(TYPE_COLOUR) != null ? defn.get(TYPE_COLOUR) : "fore";
 
 		}
 
@@ -655,33 +639,5 @@ public class PieceMakerMainBox implements SvgWriter {
 		}
 	}
 
-	public void drawFiducialLines( float gap, int rows, Element outputLayer ) {
-		// cols per row is actually the limit for zero-base
-		int colsPerRow = columnsPerRow(pieceSpacing);
-		boolean withGap = gap > 0.1f;
-		float x1 = MARGIN - gap;
-		float x2 = x1 + (colsPerRow - 1) * pieceSpacing + gap;
-		
-		for (int r = 0; r < rows + 2; r++) {
-			float y = MARGIN + r * pieceSpacing;
-			piecesDoc.drawLine(outputLayer, new XYcoords(x1, y), new XYcoords(x2, y));
-			if (withGap) {
-				y -= gap;
-				piecesDoc.drawLine(outputLayer, new XYcoords(x1, y), new XYcoords(x2, y));
-			}
-
-		}
-		float y1 = MARGIN - gap;
-		float y2 = x1 + ( rows + 1 ) * pieceSpacing + gap;
-		for (int c = 0; c < colsPerRow ; c++) {
-			float x = MARGIN + c * pieceSpacing;
-			piecesDoc.drawLine(outputLayer, new XYcoords(x, y1), new XYcoords(x, y2));
-			if (withGap) {
-				x -= gap;
-				piecesDoc.drawLine(outputLayer, new XYcoords(x, y1), new XYcoords(x, y2));
-			}
-
-		}
-	}
 
 }

@@ -1,14 +1,9 @@
 package uk.co.furniss.draw.piecemaker;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import static org.mockito.Mockito.*;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
 import org.w3c.dom.Element;
 
 import uk.co.furniss.draw.dom.PiecesDocument;
