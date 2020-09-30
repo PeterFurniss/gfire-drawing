@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -150,15 +152,20 @@ public class PieceMakerMainBox implements SvgWriter {
 		float gap = Float.parseFloat(parameters.get(PARAM_GAP));
 		pieceSpacing = pieceSize + gap;
 
-		switch (parameters.get(PARAM_PAPER).toLowerCase())  {
-		case "a4":
+		String paperType = parameters.get(PARAM_PAPER);
+		Pattern labelCracker = Pattern.compile("label(\\d*)");
+		Matcher matchLabel  = labelCracker.matcher(paperType);
+		if (paperType.equalsIgnoreCase("A4")) {
 			pageArranger = new FullPage(pieceSize, gap);
-			break;
-		case "label21":
-			pageArranger = new LabelArranger(pieceSize, gap);
-			break;
-		default:
-			throw new IllegalArgumentException("Paper type must be A4 or label21");
+		} else if (matchLabel.matches()) {
+			if (matchLabel.group(1).equals("")) {
+				pageArranger = new LabelArranger(pieceSize, gap);
+			} else {
+				pageArranger = new LabelArranger(pieceSize, gap, Integer.parseInt(matchLabel.group(1)));
+			}
+		} else {
+			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
+					+ "where # is the first label to be used (1..21)");
 		}
 		
 		// saving this for later

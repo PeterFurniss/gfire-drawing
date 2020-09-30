@@ -18,7 +18,7 @@ public class FullPage implements PageArranger {
 	private final int rowsPerPage;
 	private final int colsPerRow;
 	private final int piecesPerPage;
-	private int pieceNumber;
+	protected int pieceNumber;
 	protected int pageNumber;
 	private int currentRow;
 	protected PiecesDocument piecesDoc;

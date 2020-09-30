@@ -23,6 +23,11 @@ public class LabelArranger extends FullPage {
 	private int currentLabel;
 	
 	public LabelArranger(float pieceSize, float gap) {
+		this(pieceSize, gap, 0);
+	}
+
+
+	public LabelArranger(float pieceSize, float gap, int firstLabelNumber) {
 		super(pieceSize, gap);
 		if (pieceSpacing > EFFECTIVE_HEIGHT) {
 			if (pieceSize > EFFECTIVE_HEIGHT) {
@@ -38,8 +43,12 @@ public class LabelArranger extends FullPage {
 		colsPerLabel = (int)(EFFECTIVE_WIDTH / pieceSpacing);
 		piecesPerLabel = rowsPerLabel * colsPerLabel;
 		piecesPerPage = piecesPerLabel * LABELS_PER_ROW * LABELROWS_PER_PAGE;
-		currentLabel = 0;
+		currentLabel = firstLabelNumber - 1;
+		if (firstLabelNumber != 1) {
+			pieceNumber = currentLabel * piecesPerLabel;
+		}
 	}
+
 
 	@Override
 	public XYcoords getNextLocation() {
