@@ -36,6 +36,7 @@ public class PieceMakerMainBox implements SvgWriter {
 	private static final String PARAM_IMAGESIZE = "imagesize";
 	private static final String PARAM_PIECESIZE = "piecesize";
 	private static final String PARAM_GAP = "gap";
+	private static final String PARAM_PAPER = "paper";
 	
 	private static final String FIELD_NAME_COL = "field";
 	private static final String FIELD_TYPE_COL = "type";
@@ -81,7 +82,8 @@ public class PieceMakerMainBox implements SvgWriter {
 		        PARAM_IMAGESIZE, // size of images as in imagefile
 		        PARAM_OUTPUTFILE, // where to write the piece pictures
 		        PARAM_PIECESIZE, // how big to make the pieces
-		        PARAM_GAP
+		        PARAM_GAP,       // margin between the pieces
+		        PARAM_PAPER      // whether to allow for labels
 
 		));
 		
@@ -118,7 +120,8 @@ public class PieceMakerMainBox implements SvgWriter {
 	private final float scaling;
 	private final List<String> colourChoices = new ArrayList<>();
 	private Element outputLayer;
-
+	private final PageArranger pageArranger;
+	
 	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook, boolean testing ) {
 			
 		String defnSheet = parameters.get(PARAM_FIELDSHEET);
@@ -146,6 +149,17 @@ public class PieceMakerMainBox implements SvgWriter {
 		scaling = pieceSize / imageDefinitionSize;
 		float gap = Float.parseFloat(parameters.get(PARAM_GAP));
 		pieceSpacing = pieceSize + gap;
+
+		switch (parameters.get(PARAM_PAPER).toLowerCase())  {
+		case "a4":
+			pageArranger = new FullPage(pieceSize, gap);
+			break;
+		case "label21":
+			pageArranger = new LabelArranger(pieceSize, gap);
+			break;
+		default:
+			throw new IllegalArgumentException("Paper type must be A4 or label21");
+		}
 		
 		// saving this for later
 		String outName = parameters.get(PARAM_OUTPUTFILE);
@@ -186,16 +200,14 @@ public class PieceMakerMainBox implements SvgWriter {
 		List<String> incrementingFields = textFields.stream().filter(TextField::isIncrement).map(TextField::getName)
 		        .collect(Collectors.toList());
 
-		
-		int colsPerRow = columnsPerRow(gap);
-		int rowsPerPage = (int) ( ( PAGE_HEIGHT - 2 * ( MARGIN - gap ) ) / pieceSpacing ) - 1;
 
-		drawPieces(parameters, tbook, testing, pieceSize, gap, incrementingFields, colsPerRow, rowsPerPage);
+
+		drawPieces(parameters, tbook, testing, pieceSize, gap, incrementingFields);
 		piecesDoc.writeToFile(parameters.get(PARAM_DIRECTORY) + "/" + outName + SVG_SUFFIX);
 	}
 
 	public void drawPieces( Map<String, String> parameters, ExcelBook tbook, boolean testing, float pieceSize,
-	        float gap, List<String> incrementingFields, int colsPerRow, int rowsPerPage ) {
+	        float gap, List<String> incrementingFields ) {
 		String transformStart = "matrix(" + Float.toString(scaling) + ",0,0," + Float.toString(scaling) + ",";
 		float antiScale = 1.0f - scaling;
 
@@ -207,12 +219,8 @@ public class PieceMakerMainBox implements SvgWriter {
 			foreColours.put(choice, "green");
 		}
 		String oldBack = "black";
-		PageArranger pageArranger = new FullPage(pieceSize, gap);
 		pageArranger.start(this);
-//		int col = 0;
-//		int page = 1;
-//
-//		outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(page));
+
 		Map<String, Image> images = new HashMap<>();
 		
 		for (Map<String, String> spec : specs) {
@@ -264,9 +272,7 @@ public class PieceMakerMainBox implements SvgWriter {
 					XYcoords location = pageArranger.getNextLocation();
 					float x = location.getX();
 					float y = location.getY();
-//					float x = MARGIN + col * pieceSpacing;
-//					float y = MARGIN + row * pieceSpacing;
-//					XYcoords location = new XYcoords(x, y);
+
 					// do the background
 					piecesDoc.makeRectangle(outputLayer, x - gap * 0.5f, y - gap * 0.5f, pieceSpacing, pieceSpacing,
 					        backColour);
@@ -303,17 +309,7 @@ public class PieceMakerMainBox implements SvgWriter {
 							        tf.getJustification(), tf.getOrientation());
 						}
 					}
-//					col++;
-//					if (col > colsPerRow) {
-//						row++;
-//						col = 0;
-//						if (row > rowsPerPage) {
-//							drawFiducialLines( gap, row - 1, outputLayer);
-//							row = 0;
-//							page++;
-//							outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(page));
-//						}
-//					}
+
 					totalPieces++;
 				}
 			}
@@ -321,8 +317,6 @@ public class PieceMakerMainBox implements SvgWriter {
 
 		if (!testing) {
 			pageArranger.finish();
-			// now some lines round the pieces
-//			drawFiducialLines(gap, row, outputLayer);
 
 			for (Map.Entry<String, Integer> tally : imageTally.getCounts().entrySet()) {
 				System.out.println("   " + tally.getValue() + " of " + tally.getKey());

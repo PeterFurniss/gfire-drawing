@@ -13,16 +13,16 @@ public class FullPage implements PageArranger {
 	private static final String OUTPUT_LAYER_BASE_NAME = "output";
 	private static final String FIRST_OUTPUT_LAYER = OUTPUT_LAYER_BASE_NAME + "1";
 
-	private final float gap;
-	private final float pieceSpacing;
+	protected final float gap;
+	protected final float pieceSpacing;
 	private final int rowsPerPage;
 	private final int colsPerRow;
 	private final int piecesPerPage;
 	private int pieceNumber;
-	private int pageNumber;
+	protected int pageNumber;
 	private int currentRow;
-	private PiecesDocument piecesDoc;
-	private Element outputLayer;
+	protected PiecesDocument piecesDoc;
+	protected Element outputLayer;
 	private SvgWriter writer;
 	
 	public FullPage(float pieceSize, float gap) {
@@ -57,18 +57,23 @@ public class FullPage implements PageArranger {
 	 */
 	@Override
 	public XYcoords getNextLocation() {
-		int page = pieceNumber / piecesPerPage;
+		int numberOnPage = findNumberInPage(piecesPerPage);
+		currentRow = numberOnPage / colsPerRow;
+		int currentCol = numberOnPage % colsPerRow;
+		return new XYcoords( MARGIN + currentCol * pieceSpacing, MARGIN + currentRow * pieceSpacing);
+	}
+
+	protected int findNumberInPage(int actualPiecesPerPage) {
+		int page = pieceNumber / actualPiecesPerPage;
 
 		if (page != pageNumber) {
 			drawFiducialLines();
 			newOutputPage();
 		}
-		int numberOnPage = pieceNumber % piecesPerPage;
+		int numberOnPage = pieceNumber % actualPiecesPerPage;
 		// pieceNumber is how many we've done, but first one is at zero
 		pieceNumber++;
-		currentRow = numberOnPage / colsPerRow;
-		int currentCol = numberOnPage % colsPerRow;
-		return new XYcoords( MARGIN + currentCol * pieceSpacing, MARGIN + currentRow * pieceSpacing);
+		return numberOnPage;
 	}
 	
 	/* (non-Javadoc)
@@ -77,6 +82,10 @@ public class FullPage implements PageArranger {
 	@Override
 	public void finish() {
 		drawFiducialLines();
+		hideOtherLayers();
+	}
+
+	public void hideOtherLayers() {
 		piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);
 	}
 	
@@ -85,7 +94,7 @@ public class FullPage implements PageArranger {
 		return pageNumber + 1;
 	}
 	
-	public void drawFiducialLines() {
+	protected void drawFiducialLines() {
 		// cols per row is actually the limit for zero-base
 		boolean withGap = gap > 0.1f;
 		float x1 = MARGIN - gap;
@@ -101,7 +110,7 @@ public class FullPage implements PageArranger {
 
 		}
 		float y1 = MARGIN - gap;
-		float y2 = x1 + ( currentRow + 1 ) * pieceSpacing + gap;
+		float y2 = y1 + ( currentRow + 1 ) * pieceSpacing + gap;
 		for (int c = 0; c <= colsPerRow ; c++) {
 			float x = MARGIN + c * pieceSpacing;
 			piecesDoc.drawLine(outputLayer, new XYcoords(x, y1), new XYcoords(x, y2));
