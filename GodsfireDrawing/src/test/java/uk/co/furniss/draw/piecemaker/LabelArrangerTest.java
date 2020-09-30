@@ -14,17 +14,18 @@ import org.w3c.dom.Element;
 import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.XYcoords;
 
-class FullPageTest {
+class LabelArrangerTest {
 	
 	@Test
-	void testOne() {
+	void testFirstLabel() {
 		SvgWriter mockWriter = mock(SvgWriter.class);
 		PiecesDocument mockDoc = mock(PiecesDocument.class);
 		Element mockLayer = mock(Element.class)
 				;
 		when(mockWriter.getOutputDocument()).thenReturn(mockDoc);
 		when(mockDoc.obtainEmptyLayer("Output1")).thenReturn(mockLayer);
-		PageArranger instance = new FullPage(13.0f, 1.0f);
+		
+		PageArranger instance = new LabelArranger(13.0f, 1.0f);
 		instance.start(mockWriter);
 		for (int c =0; c < 10; c++) {
 			XYcoords location = instance.getNextLocation();

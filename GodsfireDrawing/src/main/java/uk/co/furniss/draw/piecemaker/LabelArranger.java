@@ -8,10 +8,11 @@ public class LabelArranger extends FullPage {
 	private static final float LABEL_HEIGHT = 38.1f;
 	private static final int LABELS_PER_ROW = 3;
 	private static final int LABELROWS_PER_PAGE = 7;
-	private static final float TOP_MARGIN =15.1f;
-	private static final float SIDE_MARGIN = 7.7f;
-	private static final float MID_MARGIN = 2.5f;
-	private static final float CURVE_MARGIN = 1.5f;
+	// top and side margins are the label papers plus the apparent inaccurace of the printer
+	private static final float TOP_MARGIN =15.1f + 3.1f;
+	private static final float SIDE_MARGIN = 7.7f + 1.3f;
+	private static final float MID_MARGIN = 2.6f;
+	private static final float CURVE_MARGIN = 2.5f;
 	
 	private static final float EFFECTIVE_WIDTH = LABEL_WIDTH - 2 * CURVE_MARGIN;
 	private static final float EFFECTIVE_HEIGHT = LABEL_HEIGHT - 2 * CURVE_MARGIN;
@@ -23,7 +24,7 @@ public class LabelArranger extends FullPage {
 	private int currentLabel;
 	
 	public LabelArranger(float pieceSize, float gap) {
-		this(pieceSize, gap, 0);
+		this(pieceSize, gap, 1);
 	}
 
 

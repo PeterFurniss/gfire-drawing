@@ -21,7 +21,11 @@ public enum Orientation { BOTTOM(""), RIGHT("rotate(-90)"), TOP("scale(-1)"), LE
 	}
 	
 	public static Orientation fromTransform(String transform) {
-		return map.get(transform);
+		Orientation lookedUp = map.get(transform);
+		if (lookedUp == null) {
+			lookedUp = BOTTOM;
+		}
+		return lookedUp;
 	}
 	
 }
