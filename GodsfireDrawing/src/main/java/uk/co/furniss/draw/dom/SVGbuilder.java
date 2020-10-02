@@ -18,14 +18,16 @@ import org.w3c.dom.Text;
 public class SVGbuilder {
 
 	
-	protected final Element svgDoc;
+	protected final Element documentElement;
+	protected Element appendingElement;
 	Document parentDocument;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SVGbuilder.class.getName());
 	
 	public SVGbuilder(Element docElement) {
-		this.svgDoc = docElement;
-		this.parentDocument = svgDoc.getOwnerDocument();
+		this.documentElement = docElement;
+		appendingElement = this.documentElement;
+		this.parentDocument = documentElement.getOwnerDocument();
 
 	}
 	
@@ -109,7 +111,19 @@ public class SVGbuilder {
 		}
 		return answer;
 	}
+	
+	public void translateElement(Element target, XYcoords translation) {
+		target.setAttribute("transform", "translate(" + translation + ")");
+	}
 
+	public Element makeGroup(String groupId) {
+		Element group = createElement("g");
+		documentElement.appendChild(group);
+		group.setAttribute("id", groupId);
+		appendingElement = group;
+		return appendingElement;
+	}
+	
 	/**
 	 * add an element as child of the document we are working on
 	 * @param name   what kind of element
@@ -117,7 +131,7 @@ public class SVGbuilder {
 	 */
 	protected Element addElement( String name ) {
 		Element child = createElement(name);
-		svgDoc.appendChild(child);
+		appendingElement.appendChild(child);
 		return child;
 	}
 
@@ -128,7 +142,7 @@ public class SVGbuilder {
 
 	public void addComment( String string ) {
 		Comment comment = parentDocument.createComment("\n    " + string + "\n");
-		svgDoc.appendChild(comment);
+		appendingElement.appendChild(comment);
 	}
 	
 	public Text createText(String content) {
@@ -146,7 +160,7 @@ public class SVGbuilder {
 
 	public Element addTranslatedClone( String pattern, float dx, float dy ) {
 		Element use = createTranslatedClone(pattern, dx, dy);
-		svgDoc.appendChild(use);
+		appendingElement.appendChild(use);
 		return use;
 	}
 
@@ -162,7 +176,7 @@ public class SVGbuilder {
 
 	public void writeToFile( String outFile ) {
 	    try(  PrintWriter out = new PrintWriter( outFile )  ){
-	        out.println( XmlUtil.serialiseXml(svgDoc, true) );
+	        out.println( XmlUtil.serialiseXml(documentElement, true) );
 	        System.out.println("Wrote " + outFile);
 	    } catch (FileNotFoundException e) {
 			throw new IllegalArgumentException("Failed to write to " + outFile, e);

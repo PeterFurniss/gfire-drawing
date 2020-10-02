@@ -6,6 +6,7 @@ import java.util.Set;
 import org.w3c.dom.Element;
 
 import uk.co.furniss.draw.dom.XPathUtil;
+import uk.co.furniss.draw.dom.XYcoords;
 import uk.co.furniss.draw.dom.XmlUtil;
 
 public class GfMap {
@@ -13,7 +14,9 @@ public class GfMap {
 	int maxRows;
 	int maxCols;
 	private final GfMapBuilder svg;
+	private final Element mapGroup;
 	private Set<Cell> nextButOne = new HashSet<>();
+
 	
 	public GfMap(String patternFileName, int maxRows, int maxCols, float spacing) {
 		this.maxRows = maxRows;
@@ -22,6 +25,7 @@ public class GfMap {
         Element svgDoc = XmlUtil.deserialiseXmlFile(patternFileName);
 
         svg = new GfMapBuilder(svgDoc, spacing);
+        mapGroup = svg.makeGroup("gfmap");
         
 		GfMapBuilder.ensureNamespace("xlink", XPathUtil.XLINK_NS, svgDoc);
 
@@ -30,6 +34,14 @@ public class GfMap {
 
 	}
 
+	private static final float OVERLAP = 12.0f;
+	private static final float PAGE_WIDTH = 210.0f - OVERLAP;
+	private static final float PAGE_HEIGHT = 297.0f - OVERLAP;
+
+	public void moveToPage(int row, int col) {
+		svg.translateElement(mapGroup, new XYcoords( -col * PAGE_WIDTH, -row * PAGE_HEIGHT));
+	}
+	
 	private void makeMap() {
 		svg.addComment("the hexes by row, column and colour");
 		for (int row = 0; row < maxRows; row++) {

@@ -62,7 +62,7 @@ public class GfMapBuilder extends SVGbuilder {
  		
 	}
 
-
+	
 	public void systemCell(Cell cell, String name) {
 		String fillColour = "white";
 		String strokeColour = "black";
@@ -124,7 +124,8 @@ public class GfMapBuilder extends SVGbuilder {
 		
 		Element box = addElement("rect");
 		Element label = addElement("text");
-		box.setAttribute("style", "fill:rgb(238,170,255);stroke:none");
+//		box.setAttribute("style", "fill:rgb(238,170,255);stroke:none");
+		box.setAttribute("style", "fill:fuchsia;stroke:none");
 		float width = name.length() * 8;
 		box.setAttribute("width", Float.toString(width));
 		box.setAttribute("height", "12");
@@ -203,7 +204,7 @@ public class GfMapBuilder extends SVGbuilder {
 	}
 	
 	public void roundNumbers() {
-		SVGmangler.roundNumbers(svgDoc);
+		SVGmangler.roundNumbers(documentElement);
 	}
 
 	
@@ -226,7 +227,7 @@ public class GfMapBuilder extends SVGbuilder {
 		use.setAttribute("y", Float.toString(dy));
 		// reference the pattern
 		use.setAttributeNS(XPathUtil.XLINK_NS, "xlink:href", "#" + patterns.getHex(colour).getId());
-		svgDoc.appendChild(use);
+//		appendingElement.appendChild(use);
 		// add the logical r, c number
 		addNumber(row,  col,  colour);
 		return use;
