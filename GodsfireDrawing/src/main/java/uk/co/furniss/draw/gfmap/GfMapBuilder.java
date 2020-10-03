@@ -58,10 +58,7 @@ public class GfMapBuilder extends SVGbuilder {
         float side = patterns.getHexWidth() / 2.0f;
         xNumber = side * 0.5f;
         yNumber = side * .2f;
-        
- 		
 	}
-
 	
 	public void systemCell(Cell cell, String name) {
 		String fillColour = "white";
@@ -149,7 +146,7 @@ public class GfMapBuilder extends SVGbuilder {
 
 	;
 	/**
-	 * x coordinate of hex top-right origin (right ?)
+	 * x coordinate of hex top-right origin (right ?) left, surely
 	 */
 	public float xCoord(int row, int col, HexColour colour) {
 		boolean oddRow = row % 2 == 1;
@@ -163,6 +160,48 @@ public class GfMapBuilder extends SVGbuilder {
 	 */
 	public float yCoord(int row, int col, HexColour colour) {
 		return margin + yUnit*row*3.0f  + yOffsets.get(colour);
+	}
+
+	// for a given x coordinate, which hex column is it in
+	//  is this to be sure on the left or the right
+	//    
+	public int getColOfX(float xPosition, boolean left, int maxCols) {
+		int c = (int) ((xPosition - margin) / (3.0f * xUnit));
+		
+		// if the nw and sw corners are to the right of xPosition, we need to go the column on the left
+		if (left && xCoord(0, c, HexColour.RED) + xUnit * 0.5f >  xPosition ) {
+			c--;
+		}
+		// is the right most part of the green 
+		if (! left && (xCoord(0, c, HexColour.GREEN)+ 1.5f * xUnit) < xPosition) {
+			c = c + 1;
+		}
+		if (c < 0) {
+			c = 0;
+		}
+		if (c >= maxCols) {
+			c = maxCols - 1;
+		}
+		return c;
+		
+	}
+	
+	public int getRowOfY(float yPosition, boolean top, int maxRows) {
+		int r = (int) (( yPosition - margin) / (3.0f * yUnit));
+		if ( top &&  ( yCoord(r, 0, HexColour.GREEN) > yPosition)) {
+			r = r - 1;
+		}
+
+		if ( !top && ( yCoord(r, 0, HexColour.GREEN) + 2 * yUnit ) < yPosition) {
+			r = r + 1;
+		}
+		if (r < 0) {
+			r = 0;
+		}
+		if (r >= maxRows) {
+			r = maxRows - 1;
+		}
+		return r;
 	}
 
 	
@@ -232,6 +271,8 @@ public class GfMapBuilder extends SVGbuilder {
 		addNumber(row,  col,  colour);
 		return use;
 	}
+
+
 	
 	
 }

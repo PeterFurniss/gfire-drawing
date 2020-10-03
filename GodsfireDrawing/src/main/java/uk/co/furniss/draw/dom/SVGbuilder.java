@@ -21,6 +21,7 @@ public class SVGbuilder {
 	protected final Element documentElement;
 	protected Element appendingElement;
 	Document parentDocument;
+	private int layers = 0;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SVGbuilder.class.getName());
 	
@@ -28,6 +29,7 @@ public class SVGbuilder {
 		this.documentElement = docElement;
 		appendingElement = this.documentElement;
 		this.parentDocument = documentElement.getOwnerDocument();
+    		
 
 	}
 	
@@ -116,12 +118,24 @@ public class SVGbuilder {
 		target.setAttribute("transform", "translate(" + translation + ")");
 	}
 
-	public Element makeGroup(String groupId) {
+	public Element makeLayer(String layerName) {
+		ensureNamespace("inkscape", "http://www.inkscape.org/namespaces/inkscape", documentElement);
+		Element layer = createElement("g");
+		documentElement.appendChild(layer);
+		layer.setAttribute("inkscape:label", layerName);
+		layer.setAttribute("id",  "layer" + ++layers);
+		layer.setAttribute("inkscape:groupmode",  "layer");
+		// hide all layers
+		layer.setAttribute("style", "display:none");
+		return layer;
+	}
+	
+	public Element makeGroup(String groupId, Element parent) {
 		Element group = createElement("g");
-		documentElement.appendChild(group);
+		parent.appendChild(group);
 		group.setAttribute("id", groupId);
 		appendingElement = group;
-		return appendingElement;
+		return group;
 	}
 	
 	/**
