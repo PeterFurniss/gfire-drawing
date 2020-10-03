@@ -22,6 +22,7 @@ public class GfPatternHexes {
 	private final float hexHeight;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(GfPatternHexes.class.getName());
+	
 	public float getHexHeight() {
 		return hexHeight;
 	}

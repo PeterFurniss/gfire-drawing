@@ -8,6 +8,10 @@ public class GfMapMain {
 		
 	}
 
+	private static float ORIGINAL_CELL_SIZE = 15.0f;
+	private static float ORIGINAL_HEX_SIDE = 32.0f;
+	
+	
 	public static void main(String[] args) {
 		
 
@@ -22,33 +26,46 @@ public class GfMapMain {
 		// all the map
 		//  hexes don't have scaling yet
 		// (tweak OVERLAP in GfMap  to slightly change number of pages
-        float spacing = 34.0f;
 		int rows = 16;
 		int cols = 12;
+
+		float cellSize = 12;
+		float scaleFactor = cellSize / ORIGINAL_CELL_SIZE;
+		float hexSide = ORIGINAL_HEX_SIDE * scaleFactor;		
+		float horizontalGap = 2.0f * scaleFactor;
 		
-        GfMap gf = new GfMap(filePath, rows, cols, spacing);
+        GfMap gf = new GfMap(filePath, rows, cols, hexSide, horizontalGap);
         
-        Element layer = null;
+		int horizontals = gf.pagesWide();
+		int verticals =   gf.pagesDeep();
+		System.out.println("Map is " + (horizontals * verticals) + " pages, " +horizontals + " pages wide, " + verticals + " pages deep");
+		
+		Element layer = null;
         final String outFileName;
-		if (args.length == 2) {
+        if (args.length == 1) {
+        	gf.makeMap();
+        	outFileName = "godsfire_onemap";
+        } else if (args.length == 2) {
 			int horiz = Integer.parseInt(args[0]);
 			int vert  = Integer.parseInt(args[1]);
+			if (horiz >= horizontals || vert >= verticals) {
+				throw new IllegalArgumentException("Page " + horiz + ", " + vert + " is outside the boundaries of the map");
+			}
 			layer = gf.makeMap(horiz,  vert);
 			outFileName = "godsfire_" + Integer.toString(horiz) + "_" + Integer.toString(vert);
 		} else {
-			int horizontal = gf.pagesWide();
-			int vertical =   gf.pagesDeep();
-        
-			for (int h = 0; h < horizontal; h++) {
-				for (int v = 0; v < vertical ; v++ ) {
+
+			for (int h = 0; h < horizontals; h++) {
+				for (int v = 0; v < verticals ; v++ ) {
 					layer = gf.makeMap(v, h);
                 // what about the nebulae ?
 				}
 			}
 			outFileName = "godsfire_map";
-	        System.out.println("Map is on " + (horizontal * vertical) + " pages, " +horizontal + " pages wide, " + vertical + " pages deep");
 		}
-        layer.setAttribute("style",  "display:inline");
+        if (layer != null) {
+        	layer.setAttribute("style",  "display:inline");
+        }
         String outFile = directory + outFileName + svgSuffix;
 
         gf.writeToFile(outFile);

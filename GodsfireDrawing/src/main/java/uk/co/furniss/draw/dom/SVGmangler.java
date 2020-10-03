@@ -87,10 +87,12 @@ public class SVGmangler  {
 			for (Node attribute : XPU.findNodes(elementWithAttributes, "@*")) {
 				
 				String attributeName = attribute.getNodeName();
-				if (normalElement || attributeName.equals("x") || attributeName.equals("y")) {
-					String attrValue = attribute.getNodeValue();
-					elementWithAttributes.setAttribute(attribute.getNodeName(),
-							attrValue.replaceAll("(\\d*\\.\\d{2})\\d+", "$1"));
+				if (attributeName != "transform") {
+    				if (normalElement || attributeName.equals("x") || attributeName.equals("y")) {
+    					String attrValue = attribute.getNodeValue();
+    					elementWithAttributes.setAttribute(attribute.getNodeName(),
+    							attrValue.replaceAll("(\\d*\\.\\d{2})\\d+", "$1"));
+    				}
 				}
 			}
 		}

@@ -14,6 +14,11 @@ import uk.co.furniss.draw.dom.XPathUtil;
 public class GfMapBuilder extends SVGbuilder {
 	
 	public static final XPathUtil XPU = XPathUtil.getSVG();
+	
+	private final float hexSide;
+	private final float hexHalfHeight;
+	// xUnit are the actual hexSide plus 	the interhex gap
+	// yUnit is the equivalent vertically 
 	private final float xUnit;
 	private float yUnit;
 
@@ -26,28 +31,38 @@ public class GfMapBuilder extends SVGbuilder {
 	private final float xNumber;
 	private final float yNumber;
 	private final GfPatternHexes patterns;
+	private final float scaling;
+	private final String scalingPerCent;
 	
 	
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER = LoggerFactory.getLogger(GfMapBuilder.class.getName());
 
+	private static final double COS30 = Math.cos(Math.PI/ 6.0);
+
 	/**
 	 * build godsfire 3-d map
 	 * @param docElement	parent document (or element ?). Contains the pattern hexes
-	 * @param xSpacing		width a hex in whatever units
+	 * @param hexSide		width a hex in whatever units
+	 * @param interHexGap TODO
 	 */
-	public GfMapBuilder(Element docElement, float xSpacing) {
+	public GfMapBuilder(Element docElement, float hexSide, float interHexGap) {
 		super(docElement);
 				
-        double cos30 = Math.cos(Math.PI/ 6.0);
+        this.hexSide = hexSide;
+        this.hexHalfHeight = (float) (hexSide * COS30);
         
-        this.xUnit = xSpacing;
-        yUnit = (float) (xUnit * cos30);
-        margin = xUnit * 0.5f;
+        this.xUnit = hexSide + interHexGap;
+        yUnit = (float) (xUnit * COS30);
         
-        //
+        margin = 20.0f;
+        
 		patterns = new GfPatternHexes(docElement);
-		
+		float patternSide = patterns.getHexWidth() / 2.0f;
+		scaling = hexSide / patternSide;
+		scalingPerCent = Float.toString(scaling * 100) + "%";
+        
+        	
 		// define the offsets for hex of colour C, from the row, column bse
 		for (HexColour colour : HexColour.values()) {
 			xOffsets.put(colour,  colour.xOffset(xUnit));
@@ -55,17 +70,20 @@ public class GfMapBuilder extends SVGbuilder {
 		}
         
         // location of a number within a hex
-        float side = patterns.getHexWidth() / 2.0f;
-        xNumber = side * 0.5f;
-        yNumber = side * .2f;
+        LOGGER.debug("pattern side is {}, map hexSide is {}", patternSide, hexSide);
+        xNumber = hexSide * 0.5f;
+        yNumber = hexSide * .2f;
 	}
+	
+	private static final float SYSTEM_CELL_CIRCLE = 7;
+	private static final float ADJACENT_CELL_CIRCLE = 3;
+	private static final float TWO_STEP_CELL_CIRCLE = 1.5f;
 	
 	public void systemCell(Cell cell, String name) {
 		String fillColour = "white";
 		String strokeColour = "black";
-		String radius = "7";
 		addComment("System cell, name and immediate neighbours for " + name + ".");
-		cellCircle(cell.getRow(), cell.getCol(), cell.getLevel(), fillColour, strokeColour, radius);
+		cellCircle(cell.getRow(), cell.getCol(), cell.getLevel(), fillColour, strokeColour, SYSTEM_CELL_CIRCLE);
 		
 		labelCell(cell, name);
 		
@@ -74,15 +92,13 @@ public class GfMapBuilder extends SVGbuilder {
 	public void adjacentCell(Cell cell) {
 		String fillColour = "white";
 		String strokeColour = "none";
-		String radius = "3";
-		cellCircle(cell.getRow(), cell.getCol(), cell.getLevel(), fillColour, strokeColour, radius);
+		cellCircle(cell.getRow(), cell.getCol(), cell.getLevel(), fillColour, strokeColour, ADJACENT_CELL_CIRCLE);
 	}
 	
 	public void nextButOneCell(Cell cell) {
 		String fillColour = "white";
 		String strokeColour = "none";
-		String radius = "1.5";
-		cellCircle(cell.getRow(), cell.getCol(), cell.getLevel(), fillColour, strokeColour, radius);
+		cellCircle(cell.getRow(), cell.getCol(), cell.getLevel(), fillColour, strokeColour, TWO_STEP_CELL_CIRCLE);
 	}
 	
 	/**
@@ -94,10 +110,10 @@ public class GfMapBuilder extends SVGbuilder {
 	 * @param strokeColour
 	 * @param radius
 	 */
-	private void cellCircle(int row, int col, int level, String fillColour, String strokeColour, String radius) {
+	private void cellCircle(int row, int col, int level, String fillColour, String strokeColour, float radius) {
 		HexColour colour = Levels.cellLevel(level);
-		float cx = hexCentreX(row, col, colour) + patterns.getHex(colour).getCellXoffset(level);
-		float cy = hexCentreY(row, col, colour) - patterns.getHex(colour).getCellYoffset(level);
+		float cx = hexCentreX(row, col, colour) + patterns.getHex(colour).getCellXoffset(level) * scaling;
+		float cy = hexCentreY(row, col, colour) - patterns.getHex(colour).getCellYoffset(level) * scaling;
 
 		Element circle = addElement("circle");
 		
@@ -106,9 +122,22 @@ public class GfMapBuilder extends SVGbuilder {
 		if (!strokeColour.equals("none")) {
 			circle.setAttribute("stroke-width", "0.61");
 		}
-		circle.setAttribute("r", radius);
+		circle.setAttribute("r", Float.toString(radius * scaling));
 		circle.setAttribute("cx", Float.toString(cx));
 		circle.setAttribute("cy", Float.toString(cy));
+	}
+	
+	// debugging
+	@SuppressWarnings("unused")
+	private void markPoint(float x, float y) {
+		Element circle = addElement("circle");
+		circle.setAttribute("fill", "black");
+		circle.setAttribute("stroke",  "none");
+		circle.setAttribute("r", "0.5");
+		circle.setAttribute("cx", Float.toString(x));
+		circle.setAttribute("cy", Float.toString(y));
+		
+		
 	}
 	
 	private void labelCell(Cell cell, String name) {
@@ -116,31 +145,30 @@ public class GfMapBuilder extends SVGbuilder {
 		int row = cell.getRow();
 		int col = cell.getCol();
 		int level = cell.getLevel();
-		float x = hexCentreX(row, col, colour) + patterns.getHex(colour).getCellXoffset(level);
-		float y = hexCentreY(row, col, colour) - patterns.getHex(colour).getCellYoffset(level) + 8 ;
+		float x = hexCentreX(row, col, colour) + patterns.getHex(colour).getCellXoffset(level) * scaling;
+		float y = hexCentreY(row, col, colour) - patterns.getHex(colour).getCellYoffset(level) * scaling + 8 * scaling;
 		
 		Element box = addElement("rect");
 		Element label = addElement("text");
-//		box.setAttribute("style", "fill:rgb(238,170,255);stroke:none");
 		box.setAttribute("style", "fill:fuchsia;stroke:none");
-		float width = name.length() * 8;
+		float width = name.length() * 8 * scaling;
 		box.setAttribute("width", Float.toString(width));
-		box.setAttribute("height", "12");
+		box.setAttribute("height", Float.toString(12 * scaling));
 		box.setAttribute("x", Float.toString(x));
 		box.setAttribute("y", Float.toString(y));
-		label.setAttribute("x", Float.toString(x + 4));
+		label.setAttribute("x", Float.toString(x + 4 * scaling));
 		// text counts from the bottom ?
-		label.setAttribute("y", Float.toString(y + 10));
-		label.setAttribute("style", "fill:black;stroke:none;font-size:10.5;font-family:sans-serif");
+		label.setAttribute("y", Float.toString(y + 10 * scaling));
+		label.setAttribute("style", "fill:black;stroke:none;font-size:" + Float.toString(10.5f * scaling) + ";font-family:sans-serif");
 		label.setTextContent(name);
 	}
 	
 	public float hexCentreX (int row, int col, HexColour colour) {
-		return xCoord(row-1, col-1, colour) + patterns.getHexWidth()/2.0f;
+		return xCoord(row-1, col-1, colour) + hexSide; //patterns.getHexWidth()/2.0f;
 	}
 	
 	public float hexCentreY (int row, int col, HexColour colour) {
-		return yCoord(row-1, col-1, colour) + patterns.getHexHeight()/2.0f;
+		return yCoord(row-1, col-1, colour) + hexHalfHeight; // patterns.getHexHeight()/2.0f;
 	}
 	
 
@@ -207,7 +235,7 @@ public class GfMapBuilder extends SVGbuilder {
 	
 	public void addNumber(int row, int col, HexColour colour) {
 		Element number = addElement("text");
-		number.setAttribute("style", "font-family:Arial;font-size:8");
+		number.setAttribute("style", "font-family:Arial;font-size:" + Float.toString(8 * scaling));
 		number.setAttribute("x", Float.toString(xCoord(row, col, colour)+xNumber));
 		number.setAttribute("y", Float.toString(yCoord(row, col, colour)+yNumber));
 		number.setTextContent(String.format("%02d %02d",  row+1, col+1));
@@ -226,11 +254,11 @@ public class GfMapBuilder extends SVGbuilder {
 	 */
 	public void addLink(HexColour colour, int rowA, int colA, int rowB, int colB, int direction) {
 		
-		float x1 = xCoord(rowA, colA, colour) + patterns.getCornerX(direction);
-		float y1 = yCoord(rowA, colA, colour) + patterns.getCornerY(direction);
+		float x1 = xCoord(rowA, colA, colour) + patterns.getCornerX(direction) * scaling;
+		float y1 = yCoord(rowA, colA, colour) + patterns.getCornerY(direction) * scaling;
 		int opposite = (direction + 3) % 6;
-		float x2 = xCoord(rowB, colB, colour) + patterns.getCornerX(opposite);
-		float y2 = yCoord(rowB, colB, colour) + patterns.getCornerY(opposite);
+		float x2 = xCoord(rowB, colB, colour) + patterns.getCornerX(opposite) * scaling;
+		float y2 = yCoord(rowB, colB, colour) + patterns.getCornerY(opposite) * scaling;
 		
 		Element line = addElement("line");
 		line.setAttribute("x1", coordinate(x1));
@@ -238,7 +266,8 @@ public class GfMapBuilder extends SVGbuilder {
 		line.setAttribute("x2", coordinate(x2));
 		line.setAttribute("y2", coordinate(y2));
 		line.setAttribute("stroke", colour.getRGB());
-		line.setAttribute("stroke-width","1");
+		// default line width is 1
+		line.setAttribute("stroke-width",Float.toString(scaling));
 
 	}
 	
@@ -258,17 +287,19 @@ public class GfMapBuilder extends SVGbuilder {
 	public Element addHex(HexColour colour, int row, int col) {
 		// create a reference (clone)
 		Element use = addElement("use");
-		use.setAttribute("height", "100%");
-		use.setAttribute("width", "100%");
-		float dx = xCoord(row, col, colour);
+		float dx = xCoord(row, col, colour) ;
 		float dy = yCoord(row, col, colour);
-		use.setAttribute("x", Float.toString(dx));
-		use.setAttribute("y", Float.toString(dy));
+		use.setAttribute("transform", "scale(" + Float.toString(scaling) + ")");
+//		use.setAttribute("transform", "matrix(" + Float.toString(scaling) + ",0,0," + Float.toString(scaling) +
+//				",0,0)"); // + Float.toString(dx / scaling) + "," + Float.toString(dy / scaling) + ")");
+		use.setAttribute("x", Float.toString(dx / scaling));
+		use.setAttribute("y", Float.toString(dy / scaling));
 		// reference the pattern
 		use.setAttributeNS(XPathUtil.XLINK_NS, "xlink:href", "#" + patterns.getHex(colour).getId());
 //		appendingElement.appendChild(use);
 		// add the logical r, c number
 		addNumber(row,  col,  colour);
+//		markPoint(dx,dy);
 		return use;
 	}
 

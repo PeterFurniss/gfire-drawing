@@ -13,6 +13,8 @@ import uk.co.furniss.draw.dom.XmlUtil;
 
 public class GfMap {
 
+	private static final float PAGE_HEIGHT = 297.0f;
+	private static final float PAGE_WIDTH = 210.0f;
 	int maxRows;
 	int maxCols;
 	private final GfMapBuilder svg;
@@ -21,13 +23,13 @@ public class GfMap {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(GfMap.class.getName());
 	
-	public GfMap(String patternFileName, int maxRows, int maxCols, float spacing) {
+	public GfMap(String patternFileName, int maxRows, int maxCols, float hexSide, float interHexGap) {
 		this.maxRows = maxRows;
 		this.maxCols = maxCols;
 		
         Element svgDoc = XmlUtil.deserialiseXmlFile(patternFileName);
 
-        svg = new GfMapBuilder(svgDoc, spacing);
+        svg = new GfMapBuilder(svgDoc, hexSide, interHexGap);
         
 		GfMapBuilder.ensureNamespace("xlink", XPathUtil.XLINK_NS, svgDoc);
 
@@ -35,18 +37,25 @@ public class GfMap {
 	}
 
 	private static final float OVERLAP = 25.0f;
-	private static final float PAGE_WIDTH = 210.0f - OVERLAP;
-	private static final float PAGE_HEIGHT = 297.0f - OVERLAP;
+	private static final float EXPOSED_PAGE_WIDTH = PAGE_WIDTH - OVERLAP;
+	private static final float EXPOSED_PAGE_HEIGHT = PAGE_HEIGHT - OVERLAP;
 
-	
+	// do the whole thing as one diagram
+	public void makeMap() {
+		drawHexes(0, maxRows-1, 0, maxCols - 1);
+		drawLinkLines(0, maxRows-1, 0, maxCols - 1);
+		markSystems();
+	}
+
+	// do one page
 	Element makeMap(int verticalPage, int horizontalPage ) {
 		String suffix = "_" + Integer.toString(verticalPage) + "_" + Integer.toString(horizontalPage);
 		Element layer = svg.makeLayer("page" + suffix);
 		Element pageGroup = svg.makeGroup("grp" + suffix,  layer);
 		// work out which are the extreme hexes (or triads) that will be needed
-		float leftX = horizontalPage * PAGE_WIDTH;
+		float leftX = horizontalPage * EXPOSED_PAGE_WIDTH;
 		float rightX = leftX + PAGE_WIDTH;
-		float topY = verticalPage * PAGE_HEIGHT;
+		float topY = verticalPage * EXPOSED_PAGE_HEIGHT;
 		float bottomY = topY + PAGE_HEIGHT;
 		int firstCol = svg.getColOfX(leftX, true, maxCols);
 		int lastCol = svg.getColOfX(rightX, false, maxCols);
@@ -57,7 +66,7 @@ public class GfMap {
 		drawHexes(firstRow, lastRow, firstCol, lastCol);
         drawLinkLines(firstRow, lastRow, firstCol, lastCol);
         markSystems();
-        svg.translateElement(pageGroup, new XYcoords( -horizontalPage * PAGE_WIDTH, -verticalPage * PAGE_HEIGHT));
+        svg.translateElement(pageGroup, new XYcoords( -horizontalPage * EXPOSED_PAGE_WIDTH, -verticalPage * EXPOSED_PAGE_HEIGHT));
         return layer;
 	}
 
@@ -182,12 +191,13 @@ public class GfMap {
 	}
 
 	public int pagesWide() {
-		return (int) (svg.xCoord(0,  maxCols, HexColour.GREEN) / PAGE_WIDTH) + 1;
+		return (int) (svg.xCoord(0,  maxCols, HexColour.GREEN) / EXPOSED_PAGE_WIDTH) + 1;
 	}
 
 	public int pagesDeep() {
-		return (int) (svg.yCoord( maxRows, 0, HexColour.BLUE) / PAGE_HEIGHT) + 1;
+		return (int) (svg.yCoord( maxRows, 0, HexColour.BLUE) / EXPOSED_PAGE_HEIGHT) + 1;
 	}
+
 
 
 
