@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -29,7 +31,6 @@ import uk.co.furniss.xlsx.ExcelBook;
  */
 public class PieceMakerMainBox implements SvgWriter {
 
-	private static final String BACKGROUND_COLOUR_FIELD_NAME = "back";
 
 	private static final String TYPE_TEXT = "text";
 
@@ -38,11 +39,18 @@ public class PieceMakerMainBox implements SvgWriter {
 	private static final String TYPE_COLOUR = "colour";
 
 	private static final String TYPE_NUMBER = "number";
+	private static final String TYPE_FACE   = "face";
+	
+	// special field names
+	private static final String FIELD_NUMBER = TYPE_NUMBER;
+	private static final String FIELD_FACE = TYPE_FACE;
+	private static final String BACKGROUND_COLOUR_FIELD_NAME = "back";
 
 	private static final String PARAMETER_SHEET_NAME = "param";
 	
 	// the coloumns of the parameter sheet
 	private static final String PARAM_DEFNID = "defnid";
+	private static final String PARAM_PIECETYPE = "type";
 	private static final String PARAM_FIELDSHEET = "fieldsheet";
 	private static final String PARAM_SPECSHEET = "specsheet";
 	private static final String PARAM_DIRECTORY = "directory";
@@ -83,6 +91,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		
 		List<Map<String, String>> specParams = tbook.readCellsAsStrings(specSheetName, Arrays.asList(
 				PARAM_DEFNID, // allow multiple sets of params
+				PARAM_PIECETYPE,  // what sort of piece this is
 		        PARAM_FIELDSHEET, // where the field definitions are
 		        PARAM_SPECSHEET, // says what pieces to make
 		        PARAM_DIRECTORY, // where the image and output files are. if relative, relative to the spec sheet
@@ -142,8 +151,17 @@ public class PieceMakerMainBox implements SvgWriter {
 
 	private String outputFilePath;
 
+	private static final Pattern LABEL_CRACKER = Pattern.compile("label(\\d*)");
+
+	private PieceType pieceType;
+
 	
 	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook ) {
+		pieceType = PieceType.valueOf(parameters.get(PARAM_PIECETYPE).toUpperCase());
+		if (pieceType == null) {
+			throw new IllegalArgumentException("Unknown piece type " + parameters.get(PARAM_PIECETYPE));
+		}
+
 		this.tbook = tbook;	
 		String fieldSheetName = parameters.get(PARAM_FIELDSHEET);
 		specSheetName = parameters.get(PARAM_SPECSHEET);
@@ -160,23 +178,27 @@ public class PieceMakerMainBox implements SvgWriter {
 		pieceSize = Float.parseFloat(parameters.get(PARAM_PIECESIZE));
 
 		scaling = pieceSize / imageDefinitionSize;
+		
 		gapBetweenPieces = Float.parseFloat(parameters.get(PARAM_GAP));
 		pieceSpacing = pieceSize + gapBetweenPieces;
 
 		String paperType = parameters.get(PARAM_PAPER);
-		Pattern labelCracker = Pattern.compile("label(\\d*)");
-		Matcher matchLabel  = labelCracker.matcher(paperType);
-		if (paperType.equalsIgnoreCase("A4")) {
-			pageArranger = new FullPage(pieceSize, gapBetweenPieces);
-		} else if (matchLabel.matches()) {
-			if (matchLabel.group(1).equals("")) {
-				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces);
-			} else {
-				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces, Integer.parseInt(matchLabel.group(1)));
-			}
+		Matcher matchLabel  = LABEL_CRACKER.matcher(paperType);
+		if (pieceType == PieceType.SQUARE) {
+    		if (paperType.equalsIgnoreCase("A4")) {
+    			pageArranger = new FullPageArranger(pieceSize, gapBetweenPieces);
+    		} else if (matchLabel.matches()) {
+    			if (matchLabel.group(1).equals("")) {
+    				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces);
+    			} else {
+    				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces, Integer.parseInt(matchLabel.group(1)));
+    			}
+    		} else {
+    			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
+    					+ "where # is the first label to be used (1..21)");
+    		}
 		} else {
-			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
-					+ "where # is the first label to be used (1..21)");
+			pageArranger = new FullPageCubeArranger(pieceSize, gapBetweenPieces);
 		}
 		
 		outputFilePath = directoryName + "/" + parameters.get(PARAM_OUTPUTFILE)  + SVG_SUFFIX;
@@ -212,6 +234,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			String type = fieldDefn.get(FIELD_TYPE_COL);
 			switch (type) {
 			case TYPE_NUMBER:
+			case TYPE_FACE:
 				// nothing to set up
 				break;
 			case TYPE_COLOUR:
@@ -249,49 +272,38 @@ public class PieceMakerMainBox implements SvgWriter {
 			// can't be bothered looking up the stream for this
 			foreColours.put(choice, "green");
 		}
-		String oldBack = "black";
 		pageArranger.start(this);
 
+		if (pieceType == PieceType.SQUARE) { 
+			totalPieces = drawSquarePieces(incrementingFields, transformStart, antiScale, specs, totalPieces, foreColours);
+		} else {
+			totalPieces = drawCubePieces(incrementingFields, transformStart, antiScale, specs, totalPieces, foreColours);
+		}
+		pageArranger.finish();
+
+		for (Map.Entry<String, Integer> tally : imageTally.getCounts().entrySet()) {
+			System.out.println("   " + tally.getValue() + " of " + tally.getKey());
+
+		}
+		System.out
+		        .println("Created " + pageArranger.getPageCount() + " pages of " + totalPieces + " pieces with size " 
+		        		+ pieceSize + "mm");
+		
+	}
+
+
+
+	public int drawSquarePieces( List<String> incrementingFields, String transformStart, float antiScale,
+	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
 		
+		String oldBack = "black";
 		for (Map<String, String> spec : specs) {
 
 				int number = getAsInteger(TYPE_NUMBER, spec);
-				for (ImageField imageField : imageFields) {
-					String imageName = spec.get(imageField.getName());
-					if (imageName.equals("")) {
-						imageField.setSpecific(null);
-					} else {
-    					Image image = images.get(imageName);
-    					if (image == null) {
-    						LOGGER.debug("getting offset for {}", imageName);
-    						XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
-    
-    						
-    						String templateName = piecesDoc.ensureTemplate(imageName);
-    						image = new Image(imageName, templateName, offset);
-    					}
-    					imageField.setSpecific(image);
-    
-    					imageTally.increment(imageName, number);
-					}
-				}
-				Map<String, Integer> incrementers = new HashMap<>();
-				for (String incrementer : incrementingFields) {
-					incrementers.put(incrementer, getAsInteger(incrementer, spec));
-				}
-				for (String choice : colourChoices) {
-					String colour = spec.get(choice);
-					
-					if (! colour.equals("")) { 
-						foreColours.put(choice,  colour);
-					}
-				}
-
-				String backColour = spec.get(BACKGROUND_COLOUR_FIELD_NAME);
-				if (backColour.equals("")) {
-					backColour = oldBack;
-				}
+				setImages(spec, images, number);
+				Map<String, Integer> incrementers = setIncrementors(spec, incrementingFields);
+				String backColour = setColours(spec, foreColours, oldBack);
 				oldBack = backColour;
 				
 				for (int item = 0; item < number; item++) {
@@ -342,18 +354,189 @@ public class PieceMakerMainBox implements SvgWriter {
 				}
 			
 		}
+		return totalPieces;
+	}
+	
+	private class CubeSpec {
+		private final int number;
+		private final Map<CubeFace, Map<String, String>> faces = new EnumMap<>(CubeFace.class);
+		
+		public CubeSpec(int number) {
+			this.number = number;
+		}
 
-			pageArranger.finish();
-
-			for (Map.Entry<String, Integer> tally : imageTally.getCounts().entrySet()) {
-				System.out.println("   " + tally.getValue() + " of " + tally.getKey());
-
+		public int getNumber() {
+			return number;
+		}
+		
+		void addFace( Map<String, String> faceSpec) {
+			String faceName = faceSpec.get(FIELD_FACE);
+			final CubeFace face;
+			if (faceName.length() == 1) {
+				face = CubeFace.getByLetter(faceName.toUpperCase());
+			} else {
+				face = CubeFace.valueOf(faceName.toUpperCase());
 			}
-			System.out
-			        .println("Created " + pageArranger.getPageCount() + " pages of " + totalPieces + " pieces with size " + pieceSize + "mm");
+			faces.put(face,   faceSpec);
+		}
+		
+		Map<String, String> getFace(CubeFace face) {
+			return faces.get(face);
+		}
 		
 	}
 
+	public int drawCubePieces( List<String> incrementingFields, String transformStart, float antiScale,
+	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
+		// transform the single list of specs into cube sets
+		List<CubeSpec> cubies = new ArrayList<>();
+		CubeSpec cube = null;
+		Map<String, String> previous = null;
+		for (Map<String, String> spec : specs) {
+			String numberString = spec.get(FIELD_NUMBER);
+			if (numberString.length() > 0) {
+				// using the number column to indicate start of a cube
+				int number = Integer.parseInt(numberString);
+				cube = new CubeSpec(number);
+				cubies.add(cube);
+			}
+			// copy the colours now
+			if (previous != null) {
+    			if (spec.get(BACKGROUND_COLOUR_FIELD_NAME).equals("")) {
+    				spec.put(BACKGROUND_COLOUR_FIELD_NAME, previous.get(BACKGROUND_COLOUR_FIELD_NAME));
+    			}
+    			for (String foreColour : colourChoices) {
+        			if (spec.get(foreColour).equals("")) {
+        				spec.put(foreColour, previous.get(foreColour));
+        			}
+				}
+			}
+			previous = spec;
+			cube.addFace(spec);
+		}
+		
+		
+		Map<String, Image> images = new HashMap<>();
+		
+		for (CubeSpec cubeSpec : cubies) {
+			int number = cubeSpec.getNumber();
+			totalPieces += number;
+			for (int i = 0; i < number; i++) {
+				
+				XYcoords cubeLocation = pageArranger.getNextLocation();
+				for (CubeFace face : CubeFace.values()) {
+					Map<String, String> spec = cubeSpec.getFace(face);
+				
+					setImages(spec, images, i == 0 ? number : 0);
+					Map<String, Integer> incrementers = setIncrementors(spec, incrementingFields);
+					
+					String backColour = spec.get(BACKGROUND_COLOUR_FIELD_NAME);
+					for (String choice : colourChoices) {
+						foreColours.put(choice,  spec.get(choice));
+					}
+
+					// topleft of piece
+					XYcoords location = ((CubeArranger) pageArranger).getFaceLocation(face);
+					float x = location.getX();
+					float y = location.getY();
+
+					// do the background
+					piecesDoc.makeRectangle(outputLayer, x, y , pieceSize, pieceSize,
+					        backColour);
+
+					for (ImageField imageField : imageFields) {
+						if (imageField.hasCurrentImage()) {
+    						XYcoords offset = location.add(imageField.getCurrentOffset());
+    						Element pic = piecesDoc.addCloneOfTemplate(outputLayer, imageField.getTemplateName(), offset.getX(),
+    						        offset.getY());
+    						pic.setAttribute("fill", foreColours.get(imageField.getColourChoice()));
+    
+    						pic.setAttribute("transform", transformStart + Float.toString(offset.getX() * antiScale) + ","
+    						        + Float.toString(offset.getY() * antiScale) + ")");
+						}
+					}
+					for (TextField tf : textFields) {
+						String name = tf.getName();
+						final String text;
+						if (tf.isIncrement()) {
+							Integer value = incrementers.get(name);
+							String idString = Integer.toString(value);
+							if (idString.length() == 2) {
+								idString = "0" + idString;
+							}
+							text = idString;
+							incrementers.put(name, ++value);
+						} else {
+							text = spec.get(name);
+						}
+						if (text.length() > 0) {
+							piecesDoc.addText(outputLayer, text, tf.getFontSize(), 
+									tf.transformForward(new XYcoords(x + tf.getXoffset(), y + tf.getYoffset())),
+									tf.getFontmod(), foreColours.get(tf.getColourChoice()), 
+							        tf.getJustification(), tf.getOrientation());
+						}
+					}
+
+				}
+			}
+			
+		}
+		return totalPieces;
+	}
+
+
+
+	public Map<String, Integer> setIncrementors( Map<String, String> spec, List<String> incrementingFields ) {
+		Map<String, Integer> incrementers = new HashMap<>();
+		for (String incrementer : incrementingFields) {
+			incrementers.put(incrementer, getAsInteger(incrementer, spec));
+		}
+		return incrementers;
+	}
+
+
+
+	public String setColours( Map<String, String> spec, Map<String, String> foreColours, String oldBack ) {
+		for (String choice : colourChoices) {
+			String colour = spec.get(choice);
+			
+			if (! colour.equals("")) { 
+				foreColours.put(choice,  colour);
+			}
+		}
+
+		String backColour = spec.get(BACKGROUND_COLOUR_FIELD_NAME);
+		if (backColour.equals("")) {
+			backColour = oldBack;
+		}
+		return backColour;
+	}
+
+
+
+	public void setImages( Map<String, String> spec, Map<String, Image> images, int number ) {
+		for (ImageField imageField : imageFields) {
+			String imageName = spec.get(imageField.getName());
+			if (imageName.equals("")) {
+				imageField.setSpecific(null);
+			} else {
+				Image image = images.get(imageName);
+				if (image == null) {
+					LOGGER.debug("getting offset for {}", imageName);
+					XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
+   
+					
+					String templateName = piecesDoc.ensureTemplate(imageName);
+					image = new Image(imageName, templateName, offset);
+				}
+				imageField.setSpecific(image);
+   
+				imageTally.increment(imageName, number);
+			}
+		}
+	}
+
+	
 
 	public void writeOutputSvg(  ) {
 		piecesDoc.writeToFile(outputFilePath);

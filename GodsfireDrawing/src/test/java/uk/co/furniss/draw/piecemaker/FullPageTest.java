@@ -19,7 +19,7 @@ class FullPageTest {
 				;
 		when(mockWriter.getOutputDocument()).thenReturn(mockDoc);
 		when(mockDoc.obtainEmptyLayer("Output1")).thenReturn(mockLayer);
-		PageArranger instance = new FullPage(13.0f, 1.0f);
+		PageArranger instance = new FullPageArranger(13.0f, 1.0f);
 		instance.start(mockWriter);
 		for (int c =0; c < 10; c++) {
 			XYcoords location = instance.getNextLocation();

@@ -51,6 +51,14 @@ public class XYcoords {
 		return new XYcoords(x - other.x, y - other.y);
 	}
 	
+	public XYcoords deltaX(float extra) {
+		return new XYcoords(x + extra, y);
+	}
+	
+	public XYcoords deltaY(float extra) {
+		return new XYcoords(x, y + extra);
+	}
+	
 	public XYcoords bottomRightMost(XYcoords other) {
 		return new XYcoords( x > other.x ? x : other.x,  y > other.y ? y : other.y);
 		

@@ -5,7 +5,7 @@ import org.w3c.dom.Element;
 import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.XYcoords;
 
-public class FullPage implements PageArranger {
+public class FullPageArranger implements PageArranger {
 
 	private static final float PAGE_WIDTH = 210.0f;
 	private static final float PAGE_HEIGHT = 297.0f;
@@ -25,7 +25,7 @@ public class FullPage implements PageArranger {
 	protected Element outputLayer;
 	private SvgWriter writer;
 	
-	public FullPage(float pieceSize, float gap) {
+	public FullPageArranger(float pieceSize, float gap) {
 		this.gap = gap;
 		pieceSpacing = pieceSize + gap;
 		colsPerRow = (int) ( ( PAGE_WIDTH - 2 * ( MARGIN - gap ) ) / pieceSpacing ) ;
