@@ -198,7 +198,7 @@ public class PieceMakerMainBox implements SvgWriter {
     					+ "where # is the first label to be used (1..21)");
     		}
 		} else {
-			pageArranger = new FullPageCubeArranger(pieceSize, gapBetweenPieces);
+			pageArranger = new VerticalCubeArranger(pieceSize, gapBetweenPieces);
 		}
 		
 		outputFilePath = directoryName + "/" + parameters.get(PARAM_OUTPUTFILE)  + SVG_SUFFIX;

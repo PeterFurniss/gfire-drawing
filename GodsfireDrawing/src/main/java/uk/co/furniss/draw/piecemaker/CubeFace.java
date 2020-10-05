@@ -55,4 +55,9 @@ public enum CubeFace {
 	public XYcoords getOffset(float cubeSide) {
 		return new XYcoords(cubeSide * columnOffset, cubeSide * rowOffset);
 	}
+	
+	public XYcoords getOffsetVertical(float cubeSide) {
+		return new XYcoords(cubeSide * rowOffset, cubeSide * columnOffset);
+		
+	}
 }
