@@ -57,7 +57,7 @@ public class PiecesDocument {
 		}
 	}
 
-	public String ensureTemplate(String name) {
+	public String ensureTemplate(String name, boolean retainColour) {
 		String templateName = name + TEMPLATE_SUFFIX;
 		if (! defObjects.containsKey(templateName)) {
 			LOGGER.debug("creating template object for {}", name);
@@ -75,7 +75,9 @@ public class PiecesDocument {
 //    		templateObject.internaliseTransformation();
     		
     		templateObject.setCentre(XYcoords.ORIGIN);
-    		templateObject.openStyle();
+    		if (! retainColour) {
+    			templateObject.openStyle();
+    		}
     		addDefObject(templateObject);
 		}
 		return templateName;

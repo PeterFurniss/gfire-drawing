@@ -5,7 +5,7 @@ import org.w3c.dom.Element;
 import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.XYcoords;
 
-public class FullPageArranger implements PageArranger {
+public class FullPageArranger implements PieceArranger {
 
 	private static final float PAGE_WIDTH = 210.0f;
 	private static final float PAGE_HEIGHT = 297.0f;

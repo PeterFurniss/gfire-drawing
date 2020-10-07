@@ -1,12 +1,8 @@
 package uk.co.furniss.draw.piecemaker;
 
-import uk.co.furniss.draw.dom.XYcoords;
-
-public interface PageArranger {
+public interface OutputArranger {
 
 	void start( SvgWriter writer );
-
-	XYcoords getNextLocation();
 
 	void finish();
 

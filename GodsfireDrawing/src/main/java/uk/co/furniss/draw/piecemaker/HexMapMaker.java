@@ -29,23 +29,21 @@ import uk.co.furniss.xlsx.ExcelBook;
  * numbers, which silhouette and colours (that will take som designing). piece
  * silhouette is an image from an input svg file. object has a specific name
  */
-public class PieceMakerMainBox implements SvgWriter {
+public class HexMapMaker implements SvgWriter {
 
 
 	private static final String TYPE_TEXT = "text";
-
 	private static final String TYPE_IMAGE = "image";
-
 	private static final String TYPE_COLOUR = "colour";
-
 	private static final String TYPE_NUMBER = "number";
 	private static final String TYPE_FACE   = "face";
-	private static final String PROPER_COLOUR = "proper";
 
+	
 	// special field names
 	private static final String FIELD_NUMBER = TYPE_NUMBER;
 	private static final String FIELD_FACE = TYPE_FACE;
 	private static final String BACKGROUND_COLOUR_FIELD_NAME = "back";
+	private static final String PROPER_COLOUR = "proper";
 
 	private static final String PARAMETER_SHEET_NAME = "param";
 	
@@ -70,8 +68,7 @@ public class PieceMakerMainBox implements SvgWriter {
 	private static final String FIELD_COLOURCHOICE_COL = TYPE_COLOUR;
 	private static final String FIELD_INCREMENT_COL = "increment";
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(PieceMakerMainBox.class.getName());
-	private static final double COS30 = Math.cos(Math.PI/ 6.0);
+	private static final Logger LOGGER = LoggerFactory.getLogger(HexMapMaker.class.getName());
 	private static final String SVG_SUFFIX = ".svg";
 
 	public static void main( String[] args ) throws FileNotFoundException {
@@ -125,7 +122,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			parameters.put(PARAM_DIRECTORY, dir.replaceFirst(".", specFileDirectory));
 		}
 		
-		PieceMakerMainBox instance = new PieceMakerMainBox(parameters, tbook);
+		HexMapMaker instance = new HexMapMaker(parameters, tbook);
 
 		instance.drawPieces();
 		instance.writeOutputSvg();
@@ -145,7 +142,7 @@ public class PieceMakerMainBox implements SvgWriter {
 	private final TallyCounter imageTally = new TallyCounter();
 	private final List<String> colourChoices = new ArrayList<>();
 	private Element outputLayer;
-	private final OutputArranger pageArranger;
+	private final PieceArranger pageArranger;
 
 	private float gapBetweenPieces;
 
@@ -155,16 +152,10 @@ public class PieceMakerMainBox implements SvgWriter {
 
 	private static final Pattern LABEL_CRACKER = Pattern.compile("label(\\d*)");
 
-	private static final String HEX_ROW_FIELD = "row";
-
-	private static final String HEX_COL_FIELD = "column";
-
-	private static final String TYPE_ROTATION = "rotation";
-
 	private PieceType pieceType;
 
 	
-	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook ) {
+	private HexMapMaker( Map<String, String> parameters, ExcelBook tbook ) {
 		pieceType = PieceType.valueOf(parameters.get(PARAM_PIECETYPE).toUpperCase());
 		if (pieceType == null) {
 			throw new IllegalArgumentException("Unknown piece type " + parameters.get(PARAM_PIECETYPE));
@@ -192,8 +183,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 		String paperType = parameters.get(PARAM_PAPER);
 		Matcher matchLabel  = LABEL_CRACKER.matcher(paperType);
-		switch (pieceType) {
-		case SQUARE:
+		if (pieceType == PieceType.SQUARE) {
     		if (paperType.equalsIgnoreCase("A4")) {
     			pageArranger = new FullPageArranger(pieceSize, gapBetweenPieces);
     		} else if (matchLabel.matches()) {
@@ -206,21 +196,8 @@ public class PieceMakerMainBox implements SvgWriter {
     			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
     					+ "where # is the first label to be used (1..21)");
     		}
-			break;
-		case CUBE:
-			pageArranger = new VerticalCubeArranger(pieceSize, gapBetweenPieces);
-			break;
-		case MAPHEX:
-			// the parameters are re-purposed for maphex
-			// pieceSize will be width of hex = hexSide * 2
-			// gapBetweenPieces  = overlap on each page
-			pageArranger = new HexArranger(pieceSize / 2, gapBetweenPieces);
-			break;
-		default:
-			throw new IllegalStateException("No arranger defined for piecetype " + pieceType);
-		}
-		if (pieceType == PieceType.SQUARE) {
 		} else {
+			pageArranger = new VerticalCubeArranger(pieceSize, gapBetweenPieces);
 		}
 		
 		outputFilePath = directoryName + "/" + parameters.get(PARAM_OUTPUTFILE)  + SVG_SUFFIX;
@@ -272,8 +249,6 @@ public class PieceMakerMainBox implements SvgWriter {
 			case TYPE_TEXT:
 				textFields.add(new TextField(fieldDefn));
 				break;
-			case TYPE_ROTATION:
-				break;
 			default:
 				throw new IllegalArgumentException("Unrecognised field type " + type + " for " + name);
 			}
@@ -292,26 +267,17 @@ public class PieceMakerMainBox implements SvgWriter {
 		List<Map<String, String>> specs = tbook.readCellsAsStrings(specSheetName, fieldNames);
 		int totalPieces = 0;
 		Map<String, String> foreColours = new HashMap<>();
-		// set the default colourChoices to something unlikely (other than black)
 		for (String choice : colourChoices) {
 			// can't be bothered looking up the stream for this
 			foreColours.put(choice, "green");
 		}
 		pageArranger.start(this);
 
-		switch (pieceType) {
-		case SQUARE:
+		if (pieceType == PieceType.SQUARE) { 
 			totalPieces = drawSquarePieces(incrementingFields, transformStart, antiScale, specs, totalPieces, foreColours);
-			break;
-		case CUBE:
+		} else {
 			totalPieces = drawCubePieces(incrementingFields, transformStart, antiScale, specs, totalPieces, foreColours);
-			break;
-		case MAPHEX:
-			totalPieces = drawMapHexes(incrementingFields, transformStart, antiScale, specs, totalPieces, foreColours);
-		default:
-			break;
 		}
-
 		pageArranger.finish();
 
 		for (Map.Entry<String, Integer> tally : imageTally.getCounts().entrySet()) {
@@ -329,7 +295,6 @@ public class PieceMakerMainBox implements SvgWriter {
 	public int drawSquarePieces( List<String> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
-		PieceArranger arranger = (PieceArranger) pageArranger;
 		
 		String oldBack = "black";
 		for (Map<String, String> spec : specs) {
@@ -343,7 +308,7 @@ public class PieceMakerMainBox implements SvgWriter {
 				for (int item = 0; item < number; item++) {
 
 					// topleft of piece
-					XYcoords location = arranger.getNextLocation();
+					XYcoords location = pageArranger.getNextLocation();
 					float x = location.getX();
 					float y = location.getY();
 
@@ -356,9 +321,8 @@ public class PieceMakerMainBox implements SvgWriter {
     						XYcoords offset = location.add(imageField.getCurrentOffset());
     						Element pic = piecesDoc.addCloneOfTemplate(outputLayer, imageField.getTemplateName(), offset.getX(),
     						        offset.getY());
-    						if (! imageField.retainColour) {
-        						pic.setAttribute("fill", foreColours.get(imageField.getColourChoice()));
-    						}
+    						pic.setAttribute("fill", foreColours.get(imageField.getColourChoice()));
+    
     						pic.setAttribute("transform", transformStart + Float.toString(offset.getX() * antiScale) + ","
     						        + Float.toString(offset.getY() * antiScale) + ")");
 						}
@@ -388,59 +352,6 @@ public class PieceMakerMainBox implements SvgWriter {
 					totalPieces++;
 				}
 			
-		}
-		return totalPieces;
-	}
-	
-	public int drawMapHexes( List<String> incrementingFields, String transformStart, float antiScale,
-	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
-		Map<String, Image> images = new HashMap<>();
-		HexArranger arranger = (HexArranger) pageArranger;
-		float hexSide = pieceSize / 2;
-		float hexHalfHeight = (float) ( hexSide * COS30 );
-
-		for (Map<String, String> spec : specs) {
-			int row = getAsInteger(HEX_ROW_FIELD, spec);
-			int col = getAsInteger(HEX_COL_FIELD, spec);
-			setImages(spec, images, 1);
-			setForeColours(spec, foreColours);
-			// Map<String, Integer> incrementers = setIncrementors(spec,
-			// incrementingFields);
-			XYcoords location = arranger.getHexLocation(row, col);
-
-			float x = location.getX();
-			float y = location.getY();
-
-			// could separate the hex boundary here
-			// and possibly need to have a rotation per image, as with colours
-			int rotation = getAsInteger("rotation", spec);
-
-			for (ImageField imageField : imageFields) {
-				if (imageField.hasCurrentImage()) {
-					XYcoords offset = location.add(imageField.getCurrentOffset());
-					Element pic = piecesDoc.addCloneOfTemplate(outputLayer, imageField.getTemplateName(), offset.getX(),
-					        offset.getY());
-					// pic.setAttribute("fill", foreColours.get(imageField.getColourChoice()));
-					
-					String rotationTransform = rotation != 0 ? "rotate(" + Integer.toString(- 60 * rotation) + "," + 
-						Float.toString(x + hexSide) + "," + Float.toString(y + hexHalfHeight) + ")," : "";
-					pic.setAttribute("transform", rotationTransform + transformStart + Float.toString(offset.getX() * antiScale) + ","
-					        + Float.toString(offset.getY() * antiScale) + ")");
-				}
-			}
-			for (TextField tf : textFields) {
-				String name = tf.getName();
-				final String text = spec.get(name);
-				if (text.length() > 0) {
-					piecesDoc.addText(outputLayer, text, tf.getFontSize(),
-					        tf.transformForward(new XYcoords(x + tf.getXoffset(), y + tf.getYoffset())),
-					        tf.getFontmod(), foreColours.get(tf.getColourChoice()), tf.getJustification(),
-					        tf.getOrientation());
-				}
-
-				totalPieces++;
-			}
-
 		}
 		return totalPieces;
 	}
@@ -477,7 +388,6 @@ public class PieceMakerMainBox implements SvgWriter {
 	public int drawCubePieces( List<String> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		// transform the single list of specs into cube sets
-		CubeArranger arranger = (CubeArranger) pageArranger;
 		List<CubeSpec> cubies = new ArrayList<>();
 		CubeSpec cube = null;
 		Map<String, String> previous = null;
@@ -512,7 +422,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			totalPieces += number;
 			for (int i = 0; i < number; i++) {
 				
-				XYcoords cubeLocation = arranger.getNextLocation();
+				XYcoords cubeLocation = pageArranger.getNextLocation();
 				for (CubeFace face : CubeFace.values()) {
 					Map<String, String> spec = cubeSpec.getFace(face);
 				
@@ -525,7 +435,7 @@ public class PieceMakerMainBox implements SvgWriter {
 					}
 
 					// topleft of piece
-					XYcoords location = arranger.getFaceLocation(face);
+					XYcoords location = ((CubeArranger) pageArranger).getFaceLocation(face);
 					float x = location.getX();
 					float y = location.getY();
 
@@ -586,7 +496,13 @@ public class PieceMakerMainBox implements SvgWriter {
 
 
 	public String setColours( Map<String, String> spec, Map<String, String> foreColours, String oldBack ) {
-		setForeColours(spec, foreColours);
+		for (String choice : colourChoices) {
+			String colour = spec.get(choice);
+			
+			if (! colour.equals("")) { 
+				foreColours.put(choice,  colour);
+			}
+		}
 
 		String backColour = spec.get(BACKGROUND_COLOUR_FIELD_NAME);
 		if (backColour.equals("")) {
@@ -597,33 +513,19 @@ public class PieceMakerMainBox implements SvgWriter {
 
 
 
-	public void setForeColours( Map<String, String> spec, Map<String, String> foreColours ) {
-		for (String choice : colourChoices) {
-			String colour = spec.get(choice);
-			
-			if (! colour.equals("")) { 
-				foreColours.put(choice,  colour);
-			}
-		}
-	}
-
-
-
 	public void setImages( Map<String, String> spec, Map<String, Image> images, int number ) {
 		for (ImageField imageField : imageFields) {
 			String imageName = spec.get(imageField.getName());
 			if (imageName.equals("")) {
-				// this image field isn't used for this item
 				imageField.setSpecific(null);
 			} else {
 				Image image = images.get(imageName);
 				if (image == null) {
-					
 					LOGGER.debug("getting offset for {}", imageName);
 					XYcoords offset = imageField.getSpecificOffset(imageName, piecesDoc);
    
 					
-					String templateName = piecesDoc.ensureTemplate(imageName, imageField.retainColour);
+					String templateName = piecesDoc.ensureTemplate(imageName, imageField.colourProper);
 					image = new Image(imageName, templateName, offset);
 				}
 				imageField.setSpecific(image);
@@ -677,19 +579,18 @@ public class PieceMakerMainBox implements SvgWriter {
 	}
 	
 	private class ImageField {
-		public final boolean retainColour;
 		private final String name;
 		private final String boxNamePattern;
 		
 		private Image currentImage;
 		private final String colourChoice;
+		private final boolean colourProper;
 
 		ImageField(Map<String, String> defn, String imageFile) {
 			name = defn.get(FIELD_NAME_COL);
-			this.boxNamePattern = defn.get(PieceMakerMainBox.FIELD_PARENTBOX_COL);
+			this.boxNamePattern = defn.get(HexMapMaker.FIELD_PARENTBOX_COL);
 			this.colourChoice = defn.get(TYPE_COLOUR) != null ? defn.get(TYPE_COLOUR) : "fore";
-			retainColour = colourChoice.equalsIgnoreCase(PROPER_COLOUR);
-
+			colourProper = colourChoice.equalsIgnoreCase(PROPER_COLOUR);
 		}
 
 		public boolean hasCurrentImage() {
