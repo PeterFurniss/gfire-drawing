@@ -55,18 +55,20 @@ public abstract class SvgObject {
 		String transformAttr = element.getAttribute("transform");
 		if (transformAttr.length() > 0) {
 			LOGGER.debug("transform on a {} is {}", element.getLocalName(), transformAttr);
-			Transform trans = new Transform(transformAttr);
+			Trans trans = new Transform2(transformAttr);
 			if (trans.isInternalising()) {
 				element.removeAttribute("transform");
-				if (trans.isTranslating()) {
-					if (trans.isScaling()) {
-						applyTransform(base, trans);
-					} else {
-						translate(trans);
-					}
-				} else {
-					scaleTo(base, trans);
-				}
+				transform(trans);
+//				applyTransform(base, trans);
+//				if (trans.isTranslating()) {
+//					if (trans.isScaling()) {
+//						applyTransform(base, trans);
+//					} else {
+//						translate(trans);
+//					}
+//				} else {
+//					scaleTo(base, trans);
+//				}
 				return true;
 			}
 		}
@@ -120,11 +122,12 @@ public abstract class SvgObject {
 	}
 
 	public abstract void move(XYcoords movement);
-	public abstract void scale(Transform trans);
-	public abstract void scaleTo(XYcoords base, Transform trans);
-	public abstract void translate(Transform trans);
+	public abstract void scale(Trans trans);
+	public abstract void scaleTo(XYcoords base, Trans trans);
+	public abstract void translate(Trans trans);
+	public abstract void transform(Trans trans);
 	
-	public final void applyTransform( XYcoords base, Transform trans ) {
+	public final void applyTransform( XYcoords base, Trans trans ) {
 		LOGGER.debug("applyTransform to {} with base {}", id, base);
 
 		if (trans.isScaling()) {

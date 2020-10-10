@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Transform {
+public class Transform implements Trans {
 
 	private final List<TransformationRevised> functions;
 	private static final Pattern TRANS_PATTERN = Pattern.compile("(\\w+.*\\))");
@@ -33,6 +33,11 @@ public class Transform {
 		}
 	}
 
+	
+	/* (non-Javadoc)
+	 * @see uk.co.furniss.draw.dom.Trans#apply(uk.co.furniss.draw.dom.XYcoords)
+	 */
+	@Override
 	public XYcoords apply( XYcoords original ) {
 		XYcoords result = original;
 		for (TransformationRevised transformation : functions) {
@@ -42,6 +47,10 @@ public class Transform {
 	}
 
 	
+	/* (non-Javadoc)
+	 * @see uk.co.furniss.draw.dom.Trans#scale(uk.co.furniss.draw.dom.XYcoords)
+	 */
+	@Override
 	public XYcoords scale( XYcoords original ) {
 		if (scaling) {
 			XYcoords result = original;
@@ -54,6 +63,10 @@ public class Transform {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.co.furniss.draw.dom.Trans#scaleTo(uk.co.furniss.draw.dom.XYcoords, uk.co.furniss.draw.dom.XYcoords)
+	 */
+	@Override
 	public XYcoords scaleTo( XYcoords base, XYcoords original ) {
 		if (scaling) {
 			XYcoords result = original;
@@ -66,6 +79,10 @@ public class Transform {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see uk.co.furniss.draw.dom.Trans#scale(float)
+	 */
+	@Override
 	public float scale( float original ) {
 		if (scaling) {
 			float result = original;
@@ -78,6 +95,16 @@ public class Transform {
 		}
 	}
 	
+	@Override
+	public XYcoords rotate( XYcoords original ) {
+		return null;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see uk.co.furniss.draw.dom.Trans#translate(uk.co.furniss.draw.dom.XYcoords)
+	 */
+	@Override
 	public XYcoords translate( XYcoords original ) {
 //		return original;
 		if (translating) {
@@ -91,14 +118,26 @@ public class Transform {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.co.furniss.draw.dom.Trans#isInternalising()
+	 */
+	@Override
 	public boolean isInternalising() {
 		return internalising;
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.co.furniss.draw.dom.Trans#isTranslating()
+	 */
+	@Override
 	public boolean isTranslating() {
 		return translating;
 	}
 
+	/* (non-Javadoc)
+	 * @see uk.co.furniss.draw.dom.Trans#isScaling()
+	 */
+	@Override
 	public boolean isScaling() {
 		return scaling;
 	}

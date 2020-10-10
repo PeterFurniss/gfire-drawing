@@ -101,7 +101,14 @@ public class SvgText extends SvgObject {
 	
 	
 	@Override
-	public void scale(Transform trans) {
+	public void transform( Trans trans ) {
+		XYcoords newXY = trans.apply(getTopLeft());
+		setXY(newXY);
+		scale(trans);
+	}
+
+	@Override
+	public void scale(Trans trans) {
 		float fontSize = getFontSizePx();
 		String newFontSize = Float.toString(trans.scale(fontSize)) + "px";
 		styling.put("font-size",  newFontSize);
@@ -110,14 +117,14 @@ public class SvgText extends SvgObject {
 	}
 	
 	@Override
-	public void scaleTo( XYcoords base, Transform trans ) {
+	public void scaleTo( XYcoords base, Trans trans ) {
 		XYcoords newXY = trans.scaleTo(base, getTopLeft());
 		setXY(newXY);
 		scale(trans);
 	}
 
 	@Override
-	public void translate(Transform trans) {
+	public void translate(Trans trans) {
 		XYcoords newXY = trans.translate(getTopLeft());
 		setXY(newXY);
 	}

@@ -285,7 +285,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		List<String> incrementingFields = textFields.stream().filter(TextField::isIncrement).map(TextField::getName)
 		        .collect(Collectors.toList());
 
-		String transformStart = "matrix(" + Float.toString(scaling) + ",0,0," + Float.toString(scaling) + ",";
+		String startTransformScaling = "matrix(" + Float.toString(scaling) + ",0,0," + Float.toString(scaling) + ",";
 		float antiScale = 1.0f - scaling;
 
 		
@@ -301,13 +301,13 @@ public class PieceMakerMainBox implements SvgWriter {
 
 		switch (pieceType) {
 		case SQUARE:
-			totalPieces = drawSquarePieces(incrementingFields, transformStart, antiScale, specs, totalPieces, foreColours);
+			totalPieces = drawSquarePieces(incrementingFields, startTransformScaling, antiScale, specs, totalPieces, foreColours);
 			break;
 		case CUBE:
-			totalPieces = drawCubePieces(incrementingFields, transformStart, antiScale, specs, totalPieces, foreColours);
+			totalPieces = drawCubePieces(incrementingFields, startTransformScaling, antiScale, specs, totalPieces, foreColours);
 			break;
 		case MAPHEX:
-			totalPieces = drawMapHexes(incrementingFields, transformStart, antiScale, specs, totalPieces, foreColours);
+			totalPieces = drawMapHexes(incrementingFields, startTransformScaling, antiScale, specs, totalPieces, foreColours);
 		default:
 			break;
 		}
@@ -392,7 +392,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		return totalPieces;
 	}
 	
-	public int drawMapHexes( List<String> incrementingFields, String transformStart, float antiScale,
+	public int drawMapHexes( List<String> incrementingFields, String startTransformScaling, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
 		HexArranger arranger = (HexArranger) pageArranger;
@@ -424,7 +424,7 @@ public class PieceMakerMainBox implements SvgWriter {
 					
 					String rotationTransform = rotation != 0 ? "rotate(" + Integer.toString(- 60 * rotation) + "," + 
 						Float.toString(x + hexSide) + "," + Float.toString(y + hexHalfHeight) + ")," : "";
-					pic.setAttribute("transform", rotationTransform + transformStart + Float.toString(offset.getX() * antiScale) + ","
+					pic.setAttribute("transform", rotationTransform + startTransformScaling + Float.toString(offset.getX() * antiScale) + ","
 					        + Float.toString(offset.getY() * antiScale) + ")");
 				}
 			}
@@ -808,6 +808,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			LOGGER.debug("box for text : tl {}, br {}", boxTL, boxBR);
 			// text BR is actually its coordinates - which always
 			XYcoords imageBR = transformBackward(textModel.getBottomRight());
+			LOGGER.debug("text :  br {}", imageBR);
 
 			// check its in bounds
 			if (boxTL.getX() <= imageBR.getX() && boxTL.getY() <= imageBR.getY() && boxBR.getX() >= imageBR.getX()

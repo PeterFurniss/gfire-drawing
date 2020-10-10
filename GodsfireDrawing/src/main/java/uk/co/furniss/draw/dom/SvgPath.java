@@ -2,8 +2,11 @@ package uk.co.furniss.draw.dom;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -18,7 +21,28 @@ public class SvgPath extends SvgObject {
 	private XYcoords topLeftOffset = null;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SvgPath.class.getName());
+	private static final Map<String, List<ParamType>> paramTypes;
 
+	private enum ParamType { XABS, YABS, XREL, YREL, SCALED, FIXED, HORIZ, VERT }
+	static {
+		paramTypes = new HashMap<>();
+		List<ParamType> xy = Arrays.asList(ParamType.XREL, ParamType.YREL);
+		paramTypes.put("M", Arrays.asList(ParamType.XABS, ParamType.YABS));
+		paramTypes.put("m", xy);
+		paramTypes.put("l", xy);
+		paramTypes.put("h", Collections.singletonList(ParamType.HORIZ));
+		paramTypes.put("v", Collections.singletonList(ParamType.VERT));
+		paramTypes.put("z", Collections.emptyList());
+		paramTypes.put("c", Arrays.asList(ParamType.XREL, ParamType.YREL, ParamType.XREL, ParamType.YREL, ParamType.XREL, ParamType.YREL));
+		paramTypes.put("s", Arrays.asList(ParamType.XREL, ParamType.YREL, ParamType.XREL, ParamType.YREL));
+		paramTypes.put("q", Arrays.asList(ParamType.XREL, ParamType.YREL, ParamType.XREL, ParamType.YREL));
+		paramTypes.put("t", xy);
+		paramTypes.put("a", Arrays.asList(ParamType.XREL, ParamType.YREL, ParamType.FIXED, ParamType.FIXED, ParamType.FIXED, ParamType.XREL, ParamType.YREL));
+
+		
+		
+	}
+	
 	public SvgPath(Element element) {
 		super(element);
 		// remove any absolute paths
@@ -40,7 +64,7 @@ public class SvgPath extends SvgObject {
 		String tformAttr = element.getAttribute("transform");
 		if (tformAttr.startsWith("scale")) {
 			LOGGER.debug("applying and removing path {} scale of {}", getId(), tformAttr);
-			Transform tform = new Transform(tformAttr);
+			Trans tform = new Transform2(tformAttr);
 			scale(tform);
 			element.removeAttribute("transform");
 		}
@@ -149,12 +173,117 @@ public class SvgPath extends SvgObject {
 //	}
 
 	@Override
-	public void translate( Transform trans ) {
+	public void translate( Trans trans ) {
 		setStart(trans.translate(getStart()));
 	}
 
 	@Override
-	public void scaleTo(XYcoords base, Transform trans ) {
+	public void transform(Trans trans ) {
+		XYcoords base = XYcoords.ORIGIN;
+		Dattribute dIn = new Dattribute();
+		LOGGER.info("pre transform by {}, d={}", trans, dIn);
+		Dbuilder dOut = new Dbuilder();
+		String cmd = dIn.next();
+		if (!cmd.equalsIgnoreCase("m")) {
+			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
+		}
+		dOut.add(cmd.toLowerCase());
+		// first one is the only absolute
+		if (base != null) {
+			XYcoords start = dIn.nextPair();
+			XYcoords scaledStart = trans.apply(start);
+			dOut.add(scaledStart);
+		}
+		while (dIn.hasNext()) {
+			String next = dIn.next();
+			if (next.matches("[A-Za-z]")) {
+				// its a command
+				cmd = next;
+				dOut.add(cmd.toLowerCase());
+			} else {
+				// it wasn't a command, so go back one to make the next next() give the same
+				// thing
+				dIn.backOne();
+			}
+			if (cmd.equals(cmd.toLowerCase())) {
+		
+				List<ParamType> ptypes = paramTypes.get(cmd);
+				if (ptypes == null) {
+					throw new IllegalStateException("No defined paramtypes for " + cmd);
+				}
+				Iterator<ParamType> ptIt = ptypes.iterator();
+				while (ptIt.hasNext()) {
+					ParamType ptype = ptIt.next();
+					switch (ptype) {
+					case XREL:
+						dOut.add(trans.rotate(dIn.nextPair()));
+						ptIt.next();
+						break;
+					case HORIZ:
+						dOut.replace("l");
+						dOut.add(trans.rotate(new XYcoords(dIn.nextValue(), 0.0f)));
+						break;
+					case VERT:
+						dOut.replace("l");
+						dOut.add(trans.rotate(new XYcoords(0.0f, dIn.nextValue())));
+						break;
+					case SCALED:
+						dOut.add(trans.scale(dIn.nextValue()));
+						break;
+					case FIXED:
+						dOut.copy(dIn, 1);
+						break;
+					default:
+						throw new IllegalStateException("Surprise paramtype " + ptype + " for " + cmd);
+					}
+					
+				}
+			
+//				case "m": // relative move
+//					cmd = "l"; // move is only for one segment
+//				case "l": // relative line
+//				case "t": // shortcut quadratic
+//					dOut.add(trans.scale(dIn.nextPair()));
+//					break;
+//				case "h": // relative horizontal
+//				case "v":
+//					dOut.add(trans.scale(dIn.nextValue()));
+//					break;
+//				case "z":
+//					break;
+//				case "c": // relative bezier - 3 xy pairs, last is next node
+//					dOut.add(trans.scale(dIn.nextPair()));
+//					dOut.add(trans.scale(dIn.nextPair()));
+//					dOut.add(trans.scale(dIn.nextPair()));
+//					break;
+//				case "s": // shortcut bezier - 2 xy pairs
+//				case "q": // quadratic
+//					dOut.add(trans.scale(dIn.nextPair()));
+//					dOut.add(trans.scale(dIn.nextPair()));
+//					break;
+//
+//				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
+//				          // destinatioin (x,y)
+//					// i think this probably requires proportionality
+//					dOut.add(trans.scale(dIn.nextPair()));
+//					dOut.copy(dIn, 3);
+//					dOut.add(trans.scale(dIn.nextPair()));
+//					break;
+//				default:
+//					throw new IllegalStateException(
+//					        "unsupported relative path command " + cmd + " from " + dIn);
+//				}
+			}
+		}
+		LOGGER.info("   {} after transform {}", getId(), dOut.getD());
+		LOGGER.debug("   {} centre is now {}", getId(), getCentre());
+		element.setAttribute("d", dOut.getD());
+		LOGGER.debug("   {} centre is now {}", getId(), getCentre());
+	}
+
+	
+	@Override
+	public void scaleTo(XYcoords base, Trans trans ) {
 
 		Dattribute dIn = new Dattribute();
 		LOGGER.debug("pre scaling to {}, d={}", base, dIn);
@@ -228,70 +357,8 @@ public class SvgPath extends SvgObject {
 
 	
 	@Override
-	public void scale( Transform trans ) {
+	public void scale( Trans trans ) {
 		scaleTo(null, trans);
-//		Dattribute dAsReceived = new Dattribute();
-//		LOGGER.debug("pre scaling {}", dAsReceived);
-//		Dbuilder dRelative = new Dbuilder();
-//		String cmd = dAsReceived.next();
-//		if (!cmd.equalsIgnoreCase("m")) {
-//			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
-//		}
-//		dRelative.add(cmd.toLowerCase());
-//		// just copy the initial absolute move ( but treat as pair 
-////		dRelative.add(dAsReceived.nextPair());
-//		while (dAsReceived.hasNext()) {
-//			String next = dAsReceived.next();
-//			if (next.matches("[A-Za-z]")) {
-//				// its a command
-//				cmd = next;
-//				dRelative.add(cmd.toLowerCase());
-//			} else {
-//				// it wasn't a command, so go back one to make the next next() give the same
-//				// thing
-//				dAsReceived.backOne();
-//			}
-//			XYcoords point;
-//			if (cmd.equals(cmd.toLowerCase())) {
-//				switch (cmd) {
-//				case "m": // relative move
-//					cmd = "l"; // move is only for one segment
-//				case "l": // relative line
-//				case "t": // shortcut quadratic
-//					dRelative.add(trans.scale(dAsReceived.nextPair()));
-//					break;
-//				case "h": // relative horizontal
-//				case "v":
-//					dRelative.add(trans.scale(dAsReceived.nextValue()));
-//					break;
-//				case "z":
-//					break;
-//				case "c": // relative bezier - 3 xy pairs, last is next node
-//					dRelative.add(trans.scale(dAsReceived.nextPair()));
-//					dRelative.add(trans.scale(dAsReceived.nextPair()));
-//					dRelative.add(trans.scale(dAsReceived.nextPair()));
-//					break;
-//				case "s": // shortcut bezier - 2 xy pairs
-//				case "q": // quadratic
-//					dRelative.add(trans.scale(dAsReceived.nextPair()));
-//					dRelative.add(trans.scale(dAsReceived.nextPair()));
-//					break;
-//
-//				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
-//				          // destinatioin (x,y)
-//					// i think this probably requires proportionality
-//					dRelative.add(trans.scale(dAsReceived.nextPair()));
-//					dRelative.copy(dAsReceived, 3);
-//					dRelative.add(trans.scale(dAsReceived.nextPair()));
-//					break;
-//				default:
-//					throw new IllegalStateException(
-//					        "unsupported relative path command " + cmd + " from " + dAsReceived);
-//				}
-//			}
-//		}
-//		LOGGER.debug("after scaling {}", dRelative.getD());
-//		element.setAttribute("d", dRelative.getD());
 	}
 
 	@Override
@@ -470,6 +537,10 @@ public class SvgPath extends SvgObject {
 		public void add( float x ) {
 			add(Float.toString(x));
 		}
+		
+		public void replace(String newcmd) {
+			fields.set(fields.size()-1, newcmd);
+		}
 
 	}
 
@@ -635,7 +706,7 @@ public class SvgPath extends SvgObject {
 	@Override
 	public String toString() {
 		return "path " + getId() + " trans=" + getTransformAttribute() 
-			+ "\nstart " + getStart() + "  TL " + topLeftOffset	 + " BR " + bottomRightOffset;
+			+ "\nstart " + getStart() + "  TLo " + topLeftOffset	 + " BRo " + bottomRightOffset;
 	}
 
 }

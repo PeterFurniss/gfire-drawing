@@ -46,7 +46,20 @@ public class SvgCircle extends SvgObject {
 //	}
 	
 	@Override
-	public void scale( Transform trans ) {
+	public void transform(  Trans trans ) {
+
+		LOGGER.debug("circle centre before {}", makeCentre());
+		XYcoords newCentre = trans.apply(makeCentre());
+		LOGGER.debug("circle centre after {}", newCentre);
+		setXY(newCentre);
+		
+		r = trans.scale(r);
+		setR();
+	}
+	
+	
+	@Override
+	public void scale( Trans trans ) {
 
 		cx = trans.scale(cx);
 		cy = trans.scale(cy);
@@ -56,7 +69,7 @@ public class SvgCircle extends SvgObject {
 	}
 	
 	@Override
-	public void scaleTo(XYcoords base, Transform trans ) {
+	public void scaleTo(XYcoords base, Trans trans ) {
 
 		setXY(trans.scaleTo(base, makeCentre()));
 		r = trans.scale(r);
@@ -76,7 +89,7 @@ public class SvgCircle extends SvgObject {
 	
 	
 	@Override
-	public void translate( Transform trans ) {
+	public void translate( Trans trans ) {
 		XYcoords newCentre = trans.translate(makeCentre());
 		setXY(newCentre);
 

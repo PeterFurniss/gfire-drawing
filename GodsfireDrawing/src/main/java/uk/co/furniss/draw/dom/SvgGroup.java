@@ -67,6 +67,14 @@ public class SvgGroup extends SvgObject {
 	}
 
 	@Override
+	public void transform( Trans trans ) {
+		for (SvgObject child : children) {
+			child.transform(trans);
+		}
+		
+	}
+
+	@Override
 	public XYcoords getBottomRight() {
 		
 		float rightmostX = -100000.0f;
@@ -137,7 +145,7 @@ public class SvgGroup extends SvgObject {
 	}
 
 	@Override
-	public void scale(Transform trans) {
+	public void scale(Trans trans) {
 		XYcoords centre = getCentre();
 		for (SvgObject child : children) {
 			child.scaleTo(centre, trans);
@@ -145,7 +153,7 @@ public class SvgGroup extends SvgObject {
 	}
 	
 	@Override
-	public void scaleTo(XYcoords base, Transform trans) {
+	public void scaleTo(XYcoords base, Trans trans) {
 		for (SvgObject child : children) {
 			child.scaleTo(base, trans);
 		}
@@ -153,7 +161,7 @@ public class SvgGroup extends SvgObject {
 	
 	
 	@Override
-	public void translate(Transform trans) {
+	public void translate(Trans trans) {
 		for (SvgObject child : children) {
 			child.translate(trans);
 		}

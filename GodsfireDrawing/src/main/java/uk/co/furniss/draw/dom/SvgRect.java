@@ -27,6 +27,18 @@ public class SvgRect extends SvgObject {
 		this.height = original.height;
 	}
 
+	@Override
+	public void transform(Trans trans) {
+		
+		XYcoords newTL = trans.apply(getTopLeft());
+		XYcoords newBR = trans.apply(getBottomRight());
+		x = newTL.getX();
+		y = newTL.getY();
+		width = newBR.getX() - x;
+		height = newBR.getY() - y;
+		setXY();
+		setWH();
+	}
 	
 //	@Override
 //	public void applyTransform(XYcoords base, Transform trans) {
@@ -41,14 +53,14 @@ public class SvgRect extends SvgObject {
 //	}
 
 	@Override
-	public void scale(Transform trans) {
+	public void scale(Trans trans) {
 		width = trans.scale(width);
 		height = trans.scale(height);
 		setWH();
 	}
 	
 	@Override
-	public void scaleTo( XYcoords base, Transform trans ) {
+	public void scaleTo( XYcoords base, Trans trans ) {
 		XYcoords newXY = trans.scaleTo(base, getTopLeft());
 		setXY(newXY);
 		XYcoords newSize = trans.scale(new XYcoords(width, height));
@@ -56,7 +68,7 @@ public class SvgRect extends SvgObject {
 	}
 
 	@Override
-	public void translate(Transform trans) {
+	public void translate(Trans trans) {
 		XYcoords newXY = trans.translate(getTopLeft());
 		setXY(newXY);
 	}
