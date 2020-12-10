@@ -19,13 +19,14 @@ public class GfMap {
 	int maxCols;
 	private final GfMapBuilder svg;
 	private Set<Cell> nextButOne = new HashSet<>();
-
+	private final boolean transpose;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(GfMap.class.getName());
 	
-	public GfMap(String patternFileName, int maxRows, int maxCols, float hexSide, float interHexGap) {
+	public GfMap(String patternFileName, int maxRows, int maxCols, float hexSide, float interHexGap, boolean transpose) {
 		this.maxRows = maxRows;
 		this.maxCols = maxCols;
+		this.transpose = transpose;
 		
         Element svgDoc = XmlUtil.deserialiseXmlFile(patternFileName);
 
@@ -149,6 +150,7 @@ public class GfMap {
         setPlanet(11,  3,  0, "Zia");
         setPlanet(13,  9, -2, "Vand");
         setPlanet(15,  2,  4, "Pirr");
+        setPlanet(15,  5, -4, "Grom");
         setPlanet(15, 11,  4, "Chula");
      	markNextButOnes();
 	}
@@ -157,7 +159,13 @@ public class GfMap {
 	// mark system cells and their neighbours
 	// just write all of these anyway - coping with the window boundaries is too complicated
 	public void setPlanet(int row, int col, int gfLevel, String name) {
-     	Cell sys = new Cell(row, col, gfLevel);
+		
+     	final Cell sys;
+     	if (transpose) {
+     		sys = new Cell(col, row, gfLevel);
+     	} else {
+     		sys = new Cell(row, col, gfLevel);
+     	}
      	Set<Cell> closer = new HashSet<>();
      	Set<Cell> ourNextButOne = new HashSet<>();
      	svg.systemCell(sys, name);

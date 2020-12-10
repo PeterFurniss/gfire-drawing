@@ -746,10 +746,11 @@ public class PieceMakerMainBox implements SvgWriter {
 		XYcoords imageBR = image.getBottomRight();
 		LOGGER.debug("item {}, BR {}", image.getId(), imageBR);
 		// check its in bounds
-		if (    boxTL.getX() <= imageTL.getX() 
+		if (  (  boxTL.getX() <= imageTL.getX() 
 			&&	boxTL.getY() <= imageTL.getY()
 			&&	boxBR.getX() >= imageBR.getX()
-			&&	boxBR.getY() >= imageBR.getY() ) {
+			&&	boxBR.getY() >= imageBR.getY() )
+				|| image.getId().startsWith("border") ) {
 			final float imageX, imageY;
 			XYcoords imageCentre = image.getCentre();  	
 			imageX = imageCentre.getX();

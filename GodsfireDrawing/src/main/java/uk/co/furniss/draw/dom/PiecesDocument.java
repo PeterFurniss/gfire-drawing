@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,12 +175,14 @@ public class PiecesDocument {
 		line.setAttribute("stroke-width", "0.1");
 		outputLayer.appendChild(line);
 	}
+	private static Pattern ASTER_PATTERN = Pattern.compile("(.*)aster(.*)");
 
 	public void addText( Element parent, String text, float size, XYcoords xy, String mods, String colour, Justification justification, String transform ) {
 		Element textElement = svg.createElement("text");
 		textElement.setAttribute("font-size", Float.toString(size) + "px");
 		textElement.setAttribute("fill", colour);
 		if (! transform.equals("")) {
+			// transform will (invariably ?) the direction of the writing
 			textElement.setAttribute("transform", transform);
 		}
 		if (text.equals("star")) {
@@ -187,6 +191,36 @@ public class PiecesDocument {
 		} else if (text.equals("blob")) {
     		textElement.appendChild(svg.createText("="));
     		textElement.setAttribute("font-family", "webdings");
+		} else if (text.contains("aster")) {
+			// wbrm star often follows a number
+			Matcher asterMatch = ASTER_PATTERN.matcher(text);
+			if (asterMatch.matches()) {
+				String before = asterMatch.group(1);
+				String after = asterMatch.group(2);
+				Float dx = 0.0f;
+				if (before.length() > 0) {
+					Element tspanBefore = svg.createElement("tspan");
+					textElement.appendChild(tspanBefore);
+					tspanBefore.appendChild(svg.createText(before));
+					int padding = before.length() - before.trim().length();
+					if (padding > 0) {
+						dx += padding * size * 0.65f ;
+					}
+				}
+				Element tspanAster = svg.createElement("tspan");
+				textElement.appendChild(tspanAster);
+				if (dx > 0) {
+					tspanAster.setAttribute("dx", Float.toString(dx));
+				}
+				tspanAster.setAttribute("font-family",  "wingdings 2");
+				tspanAster.appendChild(svg.createText("Ý"));
+				if (after.length() > 0) {
+					Element tspanafter = svg.createElement("tspan");
+					textElement.appendChild(tspanafter);
+					tspanafter.appendChild(svg.createText(after));
+					dx += size * after.length();
+				}
+			}
     	} else {
     		textElement.appendChild(svg.createText(text));
     		if (mods.contains("bold")) {

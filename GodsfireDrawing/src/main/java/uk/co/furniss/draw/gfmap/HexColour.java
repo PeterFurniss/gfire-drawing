@@ -1,9 +1,12 @@
 package uk.co.furniss.draw.gfmap;
 
 public enum HexColour 
-		{RED (0.0f, 0.0f, "rgb(255,0,0)"),
-		GREEN(1.5f, 1.0f, "rgb(0,255,0)"),
-		BLUE (0.0f, 2.0f, "rgb(0,0,255)");
+//		{RED (0.0f, 0.0f, "rgb(255,0,0)"),
+//		GREEN(1.5f, 1.0f, "rgb(0,255,0)"),
+//		BLUE (0.0f, 2.0f, "rgb(0,0,255)");
+	{RED (0.0f, 0.0f, "rgb(255,152,152)"),
+	GREEN(1.5f, 1.0f, "rgb(146,255,146)"),
+	BLUE (0.0f, 2.0f, "rgb(190,190,255)");
 	
 private float xFactor;
 private float yFactor;
