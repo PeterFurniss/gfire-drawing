@@ -11,17 +11,22 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ExcelBook {
 	private final String filePath;
 	private final String bookName;
 	private final Workbook workbook;
 	private FileInputStream inputStream;
-
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExcelBook.class.getName());
+	
 	public ExcelBook(String filePath) throws FileNotFoundException {
 		this.filePath = filePath;
 
@@ -114,6 +119,10 @@ public class ExcelBook {
 					if (cell != null) {
     					switch (cell.getCellType()) {
     					case STRING:
+    						RichTextString rts = cell.getRichStringCellValue();
+    						if (rts.numFormattingRuns() > 0) {
+        						LOGGER.warn("string {} has {} formatting runs", rts.getString(), rts.numFormattingRuns());
+    						}
     						line.put(colName, cell.getStringCellValue());
     						break;
     					case BOOLEAN:
