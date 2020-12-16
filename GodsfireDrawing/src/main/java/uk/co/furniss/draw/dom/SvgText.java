@@ -61,11 +61,15 @@ public class SvgText extends SvgObject {
 			mstyle = STYLE_PATTERN.matcher(tspanStyle);
 			while (mstyle.find()) {
 				String key = mstyle.group(1);
-				String value = mstyle.group(2);
-				if (! value.equals(styling.get(key)) && styling.get(key) != null  && ! key.contains("inkscape")) {
-					LOGGER.info("tspan styling for {} differs - text {}, tspan " + value, key, styling.get(key));
-					styling.put(key,  value);
-
+				if (! key.contains("inkscape")) {
+					String value = mstyle.group(2);
+    				if (styling.get(key) == null ) {
+    					styling.put(key,  value);
+    				} else if (! value.equals(styling.get(key)) ) {
+    					LOGGER.info("tspan styling for {} differs - text {}, tspan " + value, key, styling.get(key));
+    					styling.put(key,  value);
+    
+    				}
 				}
 			}
 			

@@ -178,9 +178,12 @@ public class PiecesDocument {
 		outputLayer.appendChild(line);
 	}
 	private static Pattern ASTER_PATTERN = Pattern.compile("(.*)aster(.*)");
-	// escape pattern applies only to alpha-numerics immediately after an escape marker  (for now)
-	private static Pattern ESCAPE_PATTERN = Pattern.compile("(.*?)\\\\(\\w)(\\w*)(.*)");
-
+	// escape (bold, underline, italic) applies only for that sequence of alphanumerics
+	private static Pattern ESCAPE_PATTERN = Pattern.compile("(.*?)\\\\(\\w)(\\w+)(.*)");
+	// unicode pattern will be applied repeatedl
+	private static Pattern UNICODE_PATTERN = Pattern.compile("(.*?)U\\+(\\w{4})(.*)");
+	// at present, can't escape / modify a unicode
+	
 	public void addText( Element parent, String text, float size, XYcoords xy, String mods, String colour, Justification justification, String transform ) {
 		Element textElement = svg.createElement("text");
 		textElement.setAttribute("font-size", Float.toString(size) + "px");
@@ -189,131 +192,32 @@ public class PiecesDocument {
 			// transform will (invariably ?) the direction of the writing
 			textElement.setAttribute("transform", transform);
 		}
+		// these mods are set for the text field - i.e. defined in the example svg
+		if (mods.contains("bold")) {
+			textElement.setAttribute("font-weight", "bold");
+		}
+		if (mods.contains("italic")) {
+			textElement.setAttribute("font-style", "italic");
+		}
+		
+		// if whole text is a keyword, substitute the unicode
 		if (text.equals("star")) {
-    		textElement.appendChild(svg.createText("«"));
-    		textElement.setAttribute("font-family", "wingdings");
+			// five point star - was wingdings  "«"
+			text = "U+2605";
 		} else if (text.equals("blob")) {
-    		textElement.appendChild(svg.createText("="));
-    		textElement.setAttribute("font-family", "webdings");
-		} else if (text.contains("aster")) {
-			// wbrm star often follows a number
-			Matcher asterMatch = ASTER_PATTERN.matcher(text);
-			if (asterMatch.matches()) {
-				String before = asterMatch.group(1);
-				String after = asterMatch.group(2);
-				Float dx = 0.0f;
-				if (before.length() > 0) {
-					Element tspanBefore = svg.createElement("tspan");
-					textElement.appendChild(tspanBefore);
-					tspanBefore.appendChild(svg.createText(before));
-					int padding = before.length() - before.trim().length();
-					if (padding > 0) {
-						dx += padding * size * 0.65f ;
-					}
-				}
-				Element tspanAster = svg.createElement("tspan");
-				textElement.appendChild(tspanAster);
-				if (dx > 0) {
-					tspanAster.setAttribute("dx", Float.toString(dx));
-				}
-				tspanAster.setAttribute("font-family",  "wingdings 2");
-				tspanAster.appendChild(svg.createText("Ý"));
-				if (after.length() > 0) {
-					Element tspanafter = svg.createElement("tspan");
-					textElement.appendChild(tspanafter);
-					tspanafter.appendChild(svg.createText(after));
-					dx += size * after.length();
-				}
-			}
-		} else if (text.contains("\\")) {
-			// special modifier - underline for now, may be bold, italic etc later
-			Matcher escapeMatch = ESCAPE_PATTERN.matcher(text);
-			if (escapeMatch.matches()) {
-				String before = escapeMatch.group(1);
-				String control = escapeMatch.group(2);
-				String subject = escapeMatch.group(3);
-				String after = escapeMatch.group(4);
-				if (subject.equals("")) {
-					// mod on a non-alphanumeric
-					subject = after;
-					after = "";
-				}
-				Float dx = 0.0f;
-				if (before.length() > 0) {
-					Element tspanBefore = svg.createElement("tspan");
-					textElement.appendChild(tspanBefore);
-					tspanBefore.appendChild(svg.createText(before));
-					// doesn't move along if blank
-					int padding = before.length() - before.trim().length();
-					if (padding > 0) {
-						// guesstimated number
-						dx += padding * size * 0.65f ;
-					}
-				}
+			// solid circle - was webdings "="
+			text = "U+23FA";
+		} else if (text.equals("aster")) {
+			// pretty star
+			text = "U+273B";
+		} else if (text.equals("cyclic")) {
+			// updown arrow
+			text = "U+2b81";
+		}
 
-				Element tspanSubject = svg.createElement("tspan");
-				textElement.appendChild(tspanSubject);
-				if (dx > 0) {
-					tspanSubject.setAttribute("dx", Float.toString(dx));
-				}
-				final boolean useText;
-				switch (control) {
-				case "u":
-					tspanSubject.setAttribute("text-decoration", "underline");
-					useText = true;
-					break;
-				case "b":
-					tspanSubject.setAttribute("font-weight", "bold");
-					useText = true;
-					break;
-				case "i":
-					tspanSubject.setAttribute("font-style", "italic");
-					useText = true;
-					break;
-				case "C":   // cyclic magician
-					useText = false;
-					tspanSubject.appendChild(svg.createText("\u2b81"));
-					break;
-				case "U":   // unicode character - upper case to distinguish from underline
-					useText = false;
-					
-					try {
-						long uc = Long.decode("0x" + subject);
-						ByteBuffer b = ByteBuffer.allocate(Long.BYTES);
-						b.putLong(uc);
-						String uchar = new String(b.array(), "UTF-16");
-						tspanSubject.appendChild(svg.createText(uchar));
-					} catch (UnsupportedEncodingException e) {
-						LOGGER.warn("Failed to handle unicode " + text);
-					}
-
-					break;
-				default:
-					LOGGER.warn("Unrecognised escape sequence {} in {}",control, text);
-					useText = true;
-					break;
-				}
-				if (useText) {
-					tspanSubject.appendChild(svg.createText(subject));
-				}
-				if (after.length() > 0) {
-					Element tspanafter = svg.createElement("tspan");
-					textElement.appendChild(tspanafter);
-					tspanafter.appendChild(svg.createText(after));
-					dx += size * after.length();
-				}
-			}
-
-    	} else {
-    		textElement.appendChild(svg.createText(text));
-    		// these mods are set for the text field - i.e. defined in the example svg
-    		if (mods.contains("bold")) {
-    			textElement.setAttribute("font-weight", "bold");
-    		}
-    		if (mods.contains("italic")) {
-    			textElement.setAttribute("font-style", "italic");
-    		}
-    	}
+		do {
+			text = addToUcode(textElement, text);
+		} while (text.length() > 0);
 
 		textElement.setAttribute("text-anchor", justification.getAnchor());
 		textElement.setAttribute("text-align", justification.getAlign());
@@ -324,5 +228,85 @@ public class PiecesDocument {
 		parent.appendChild(textElement);
 		
 	}
+
+	private String addToUcode(Element textElement, String text) {
+		Matcher umatch = UNICODE_PATTERN.matcher(text);
+		if (umatch.matches()) {
+			String before = umatch.group(1);
+			String code = umatch.group(2);
+			String after = umatch.group(3);
+			addWithEscapes(textElement, before);
+			addPlainTspan(textElement, makeUnicode(code));
+			return after;
+		} else {
+			return addWithEscapes(textElement, text);
+		}
+
+	}
 	
+	private String addWithEscapes(Element textElement, String text) {
+    	// special modifier - underline for now, may be bold, italic etc later
+    	Matcher escapeMatch = ESCAPE_PATTERN.matcher(text);
+    	if (escapeMatch.matches()) {
+    		String before = escapeMatch.group(1);
+    		String control = escapeMatch.group(2);
+    		String subject = escapeMatch.group(3);
+    		String after = escapeMatch.group(4);
+    		if (subject.equals("")) {
+    			// mod on a non-alphanumeric
+    			subject = after;
+    			after = "";
+    		}
+    		
+    		addPlainTspan(textElement, before);
+    
+    		Element tspanSubject = svg.createElement("tspan");
+    		textElement.appendChild(tspanSubject);
+    
+    		switch (control) {
+    		case "u":
+    			tspanSubject.setAttribute("text-decoration", "underline");
+    			break;
+    		case "b":
+    			tspanSubject.setAttribute("font-weight", "bold");
+    			break;
+    		case "i":
+    			tspanSubject.setAttribute("font-style", "italic");
+    			break;
+    		default:
+    			LOGGER.warn("Unrecognised escape sequence {} in {}",control, text);
+    			break;
+    		}
+    		tspanSubject.appendChild(svg.createText(subject));
+    		return after;
+    	} else {
+    		addPlainTspan(textElement, text);
+    		return "";
+    	}
+	}
+	
+	private void addPlainTspan( Element parentTextElement, String text ) {
+		if (text.length() > 0) {
+    		Element tspanElement = svg.createElement("tspan");
+    		parentTextElement.appendChild(tspanElement);
+    		tspanElement.appendChild(svg.createText(text));
+		//  possible issue with trailing blanks being lost
+//		int padding = text.length() - text.trim().length();
+//		return padding * size * 0.65f ;
+		}
+	}
+	
+	private String makeUnicode(String uCode) {
+		try {
+			long uc = Long.decode("0x" + uCode);
+			ByteBuffer b = ByteBuffer.allocate(Long.BYTES);
+			b.putLong(uc);
+			String uchar = new String(b.array(), "UTF-16");
+			return uchar;
+		} catch (UnsupportedEncodingException e) {
+			LOGGER.warn("Failed to handle unicode " + uCode);
+			return uCode;
+		}
+
+	}
 }
