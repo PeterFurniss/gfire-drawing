@@ -184,6 +184,17 @@ public class PiecesDocument {
 	private static Pattern UNICODE_PATTERN = Pattern.compile("(.*?)U\\+(\\w{4})(.*)");
 	// at present, can't escape / modify a unicode
 	
+	/**
+	 * 
+	 * @param parent  parent xml element
+	 * @param text    the text to write
+	 * @param size	  font-size, in pixels
+	 * @param xy      xy coordinates, in mm from top left
+	 * @param mods    bold, italic
+	 * @param colour  colour
+	 * @param justification	left, middle, right
+	 * @param transform  any transform attribute
+	 */
 	public void addText( Element parent, String text, float size, XYcoords xy, String mods, String colour, Justification justification, String transform ) {
 		Element textElement = svg.createElement("text");
 		textElement.setAttribute("font-size", Float.toString(size) + "px");
@@ -201,6 +212,7 @@ public class PiecesDocument {
 		}
 		
 		// if whole text is a keyword, substitute the unicode
+		// these may not respond to bold, italic
 		if (text.equals("star")) {
 			// five point star - was wingdings  "«"
 			text = "U+2605";
@@ -208,10 +220,10 @@ public class PiecesDocument {
 			// solid circle - was webdings "="
 			text = "U+23FA";
 		} else if (text.equals("aster")) {
-			// pretty star
+			// pretty star (six point asterisk)
 			text = "U+273B";
 		} else if (text.equals("cyclic")) {
-			// updown arrow
+			// updown arrow  (white bear red moon, cyclic magician)
 			text = "U+2b81";
 		}
 

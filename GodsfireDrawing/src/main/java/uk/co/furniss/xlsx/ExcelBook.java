@@ -100,7 +100,7 @@ public class ExcelBook {
 		Sheet aSheet = getSheet(sheetName);
 		boolean firstRow = true;
 		List<Map<String, String>> rows = new ArrayList<>();
-
+		
 		for (Row row : aSheet) {
 			Map<String, String> line = new HashMap<>();
 			// tried to do this with iterator, but an empty cell is undefined, so row.next() skips it !
@@ -121,6 +121,7 @@ public class ExcelBook {
     					case STRING:
     						RichTextString rts = cell.getRichStringCellValue();
     						if (rts.numFormattingRuns() > 0) {
+    							// was going to use formatting bold etc. but got messy so using escapes
         						LOGGER.warn("string {} has {} formatting runs", rts.getString(), rts.numFormattingRuns());
     						}
     						line.put(colName, cell.getStringCellValue());
@@ -165,6 +166,13 @@ public class ExcelBook {
 			}
 
 			if (firstRow) {
+				// see if there are extras
+				int i = colNames.size();
+				Cell cell = row.getCell(i);
+				while (cell != null) {
+					colNames.add(cell.getStringCellValue());
+					cell = row.getCell(++i);
+				}
 				firstRow = false;
 			} else {
 				rows.add(line);
@@ -183,69 +191,5 @@ public class ExcelBook {
 			return Double.toString(asDouble);
 		}
 	}
-		
-	public List<Map<String, String>> readCellsAsStringsOld( String sheetName, List<String> colNames ) {
-		Sheet aSheet = getSheet(sheetName);
-		boolean firstRow = true;
-		List<Map<String, String>> rows = new ArrayList<>();
-		for (Row row : aSheet) {
-			Map<String, String> line = new HashMap<>();
-			Iterator<String> header = colNames.iterator();
-			for (Cell cell : row) {
-				if (header.hasNext()) {
-					String colName = header.next();
-					if (firstRow) {
-						if (!colName.equals(cell.getStringCellValue())) {
-							throw new IllegalArgumentException("Mismatched header line, expected " + colName 
-									+ " but was " + cell.getStringCellValue());
-						}
-					} else {
-						switch (cell.getCellType()) {
-						case STRING:
-							line.put(colName, cell.getStringCellValue());
-							break;
-						case BOOLEAN:
-							line.put(colName, Boolean.toString(cell.getBooleanCellValue()));
-							break;
-						case NUMERIC:
-							line.put(colName, convertAsNumber(cell));
-							break;
-						case BLANK:
-							line.put(colName, "FALSE");
-							break;
-						case FORMULA:
-							line.put(colName, cell.getStringCellValue());
-							break;
-						default:
-							System.out.print("Unrecognised cell type " + cell.getCellType());
-							break;
-						}
-					}
-				} else {
-					// extra cell in the row
-					if (firstRow) {
-						// this is wrong - probably
-						throw new IllegalArgumentException("Extra header(s) " + cell.getStringCellValue());
-
-					}
-				}
-			}
-
-			if (firstRow) {
-				firstRow = false;
-			} else {
-				// fill in any trailing empty columns
-				while (header.hasNext()) {
-					line.put(header.next(), "");
-				}
-			
-				rows.add(line);
-			}
-
-		}
-		return rows;
-
-	}
-	
 
 }

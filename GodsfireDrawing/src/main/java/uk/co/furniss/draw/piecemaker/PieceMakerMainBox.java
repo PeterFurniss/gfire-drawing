@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -62,6 +64,7 @@ public class PieceMakerMainBox implements SvgWriter {
 	private static final String PARAM_PIECESIZE = "piecesize";
 	private static final String PARAM_GAP = "gap";
 	private static final String PARAM_PAPER = "paper";
+	private static final String PARAM_OB = "ob";  // outputting order of battle is orthogonal to main params
 	
 	// the columns of a field definition sheet
 	private static final String FIELD_NAME_COL = "field";
@@ -78,13 +81,30 @@ public class PieceMakerMainBox implements SvgWriter {
 		final String specFileName;
 		final String specSheetName = PARAMETER_SHEET_NAME;
 		final String game;
+		final Set<String> options = new HashSet<>();
 
-		if (args.length != 2) {
-			throw new IllegalArgumentException("two arguments required - filename of spec sheet, game identifier");
+		List<String> argList = new ArrayList<>(Arrays.asList(args));
+		if (argList.size() < 2) {
+			throw new IllegalArgumentException("two arguments required - filename of spec sheet, game identifier (and options)");
 		}
-		specFileName = args[0];
-		game = args[1];
+		
+		// take the true arguments from the en
+		game = argList.remove(argList.size()-1);
+		specFileName = argList.remove(argList.size()-1);
 
+		while (argList.size() > 0) {
+			String option = argList.remove(0);
+			switch (option) {
+			case "-ob" : // order of battle (battalia)
+				options.add(PARAM_OB);
+				break;
+			case "-battalia":
+				options.add(PARAM_OB);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown option " + option);
+			}
+		}
 		String fullSpecFileName = new File(specFileName).getAbsolutePath().replaceAll("\\\\","/");
 		
 		String specFileDirectory = fullSpecFileName.replaceFirst("/[^/]*$","");
@@ -107,6 +127,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 		));
 		
+
 		Map<String, String> parameters = null;
 		for (Map<String, String> line : specParams) {
 			String defnId = line.get(PARAM_DEFNID);
@@ -125,6 +146,9 @@ public class PieceMakerMainBox implements SvgWriter {
 			parameters.put(PARAM_DIRECTORY, dir.replaceFirst(".", specFileDirectory));
 		}
 		
+		if (options.contains("ob")) {
+			parameters.put(PARAM_OB, PARAM_OB);
+		}
 		PieceMakerMainBox instance = new PieceMakerMainBox(parameters, tbook);
 
 		instance.drawPieces();
@@ -161,6 +185,8 @@ public class PieceMakerMainBox implements SvgWriter {
 
 	private static final String TYPE_ROTATION = "rotation";
 
+	private static final Object COMMENT_INDICATOR = "#";
+
 	private PieceType pieceType;
 
 	
@@ -194,18 +220,22 @@ public class PieceMakerMainBox implements SvgWriter {
 		Matcher matchLabel  = LABEL_CRACKER.matcher(paperType);
 		switch (pieceType) {
 		case SQUARE:
-    		if (paperType.equalsIgnoreCase("A4")) {
-    			pageArranger = new FullPageArranger(pieceSize, gapBetweenPieces);
-    		} else if (matchLabel.matches()) {
-    			if (matchLabel.group(1).equals("")) {
-    				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces);
-    			} else {
-    				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces, Integer.parseInt(matchLabel.group(1)));
-    			}
-    		} else {
-    			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
-    					+ "where # is the first label to be used (1..21)");
-    		}
+			if (parameters.get(PARAM_OB) != null) {
+				pageArranger = new BattaliaArranger(pieceSize);
+			} else {
+        		if (paperType.equalsIgnoreCase("A4")) {
+        			pageArranger = new FullPageArranger(pieceSize, gapBetweenPieces);
+        		} else if (matchLabel.matches()) {
+        			if (matchLabel.group(1).equals("")) {
+        				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces);
+        			} else {
+        				pageArranger = new LabelArranger(pieceSize, gapBetweenPieces, Integer.parseInt(matchLabel.group(1)));
+        			}
+        		} else {
+        			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
+        					+ "where # is the first label to be used (1..21)");
+        		}
+			}
 			break;
 		case CUBE:
 			pageArranger = new VerticalCubeArranger(pieceSize, gapBetweenPieces);
@@ -223,7 +253,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		} else {
 		}
 		
-		outputFilePath = directoryName + "/" + parameters.get(PARAM_OUTPUTFILE)  + SVG_SUFFIX;
+		outputFilePath = directoryName + "/" + parameters.get(PARAM_OUTPUTFILE) + (parameters.containsKey(PARAM_OB) ? "_ob" : "") + SVG_SUFFIX;
 
 		
 
@@ -232,7 +262,7 @@ public class PieceMakerMainBox implements SvgWriter {
 				FIELD_TYPE_COL,   // image, colour, text,number
 		        FIELD_PARENTBOX_COL, // surrounding box to define this image/textfield position
 		        FIELD_COLOURCHOICE_COL,  // which fore ground colour is this
-		        FIELD_INCREMENT_COL)); // this value is incremented for multiple pieces of same spec
+		        FIELD_INCREMENT_COL)); // this value is incremented for multiple pieces of same spec if there is a starting value
 
 		fieldNames = fieldDefinitions.stream().map(c -> c.get(FIELD_NAME_COL)).collect(Collectors.toList());
 		
@@ -333,7 +363,9 @@ public class PieceMakerMainBox implements SvgWriter {
 		
 		String oldBack = "black";
 		for (Map<String, String> spec : specs) {
-
+			arranger.setGroup(spec);
+			String numberString = spec.get(TYPE_NUMBER);
+			if (! numberString.equals(COMMENT_INDICATOR)) {
 				int number = getAsInteger(TYPE_NUMBER, spec);
 				setImages(spec, images, number);
 				Map<String, Integer> incrementers = setIncrementors(spec, incrementingFields);
@@ -368,12 +400,16 @@ public class PieceMakerMainBox implements SvgWriter {
 						final String text;
 						if (tf.isIncrement()) {
 							Integer value = incrementers.get(name);
-							String idString = Integer.toString(value);
-							if (idString.length() == 2) {
-								idString = "0" + idString;
+							if (value > 0) {
+    							String idString = Integer.toString(value);
+    							if (idString.length() == 2) {
+    								idString = "0" + idString;
+    							}
+    							text = idString;
+    							incrementers.put(name, ++value);
+							} else {
+								text = "";
 							}
-							text = idString;
-							incrementers.put(name, ++value);
 						} else {
 							text = spec.get(name);
 						}
@@ -387,7 +423,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 					totalPieces++;
 				}
-			
+			}
 		}
 		return totalPieces;
 	}

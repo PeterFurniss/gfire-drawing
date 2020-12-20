@@ -1,5 +1,7 @@
 package uk.co.furniss.draw.piecemaker;
 
+import java.util.Map;
+
 import org.w3c.dom.Element;
 
 import uk.co.furniss.draw.dom.PiecesDocument;
@@ -179,5 +181,10 @@ public class VerticalCubeArranger implements CubeArranger {
 		}
 	}
 
-	
+	@Override
+	public void setGroup( Map<String, String> specRow ) {
+		// do nothing
+		
+	}
+
 }
