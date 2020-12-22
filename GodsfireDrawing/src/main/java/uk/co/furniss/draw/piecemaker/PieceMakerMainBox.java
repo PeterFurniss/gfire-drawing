@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -189,6 +188,8 @@ public class PieceMakerMainBox implements SvgWriter {
 
 	private PieceType pieceType;
 
+	private boolean outline;
+
 	
 	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook ) {
 		pieceType = PieceType.valueOf(parameters.get(PARAM_PIECETYPE).toUpperCase());
@@ -222,6 +223,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		case SQUARE:
 			if (parameters.get(PARAM_OB) != null) {
 				pageArranger = new BattaliaArranger(pieceSize);
+				outline = true;
 			} else {
         		if (paperType.equalsIgnoreCase("A4")) {
         			pageArranger = new FullPageArranger(pieceSize, gapBetweenPieces);
@@ -235,6 +237,7 @@ public class PieceMakerMainBox implements SvgWriter {
         			throw new IllegalArgumentException("Paper type must be A4 or label or label#, "
         					+ "where # is the first label to be used (1..21)");
         		}
+        		outline = gapBetweenPieces == 0.0f;
 			}
 			break;
 		case CUBE:
@@ -312,9 +315,11 @@ public class PieceMakerMainBox implements SvgWriter {
 
 	public void drawPieces( ) {
 		
-		List<String> incrementingFields = textFields.stream().filter(TextField::isIncrement).map(TextField::getName)
-		        .collect(Collectors.toList());
 
+		
+		 Map<String, IncrementType> incrementingFields = textFields.stream().filter(TextField::isIncrement)
+		        .collect(Collectors.toMap(tf -> tf.getName(), tf-> tf.getIncrementType()));
+				
 		String startTransformScaling = "matrix(" + Float.toString(scaling) + ",0,0," + Float.toString(scaling) + ",";
 		float antiScale = 1.0f - scaling;
 
@@ -356,7 +361,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 
 
-	public int drawSquarePieces( List<String> incrementingFields, String transformStart, float antiScale,
+	public int drawSquarePieces( Map<String, IncrementType> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
 		PieceArranger arranger = (PieceArranger) pageArranger;
@@ -401,10 +406,20 @@ public class PieceMakerMainBox implements SvgWriter {
 						if (tf.isIncrement()) {
 							Integer value = incrementers.get(name);
 							if (value > 0) {
-    							String idString = Integer.toString(value);
-    							if (idString.length() == 2) {
-    								idString = "0" + idString;
-    							}
+								final String idString;
+								switch (tf.getIncrementType()) {
+								case INTEGER:
+									idString = Integer.toString(value);
+									break;
+								case PAD3:
+									idString = (value < 100 ? "0" : "") + Integer.toString(value);
+									break;
+								case ROMAN:
+									idString = PieceUtils.RomanNumber(value);
+									break;
+								default:
+									throw new IllegalStateException("Surprise increment attempt for " + name);
+								}
     							text = idString;
     							incrementers.put(name, ++value);
 							} else {
@@ -420,7 +435,11 @@ public class PieceMakerMainBox implements SvgWriter {
 							        tf.getJustification(), tf.getOrientation());
 						}
 					}
-
+					// do the outline
+					if (outline) {
+						piecesDoc.makeEdgeRectangle(outputLayer, x , y , 
+								pieceSize, pieceSize,(backColour.equals("black") ? "white" : "black"));
+					}
 					totalPieces++;
 				}
 			}
@@ -428,7 +447,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		return totalPieces;
 	}
 	
-	public int drawMapHexes( List<String> incrementingFields, String startTransformScaling, float antiScale,
+	public int drawMapHexes( Map<String, IncrementType> incrementingFields, String startTransformScaling, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
 		HexArranger arranger = (HexArranger) pageArranger;
@@ -510,7 +529,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		
 	}
 
-	public int drawCubePieces( List<String> incrementingFields, String transformStart, float antiScale,
+	public int drawCubePieces( Map<String, IncrementType> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		// transform the single list of specs into cube sets
 		CubeArranger arranger = (CubeArranger) pageArranger;
@@ -611,10 +630,14 @@ public class PieceMakerMainBox implements SvgWriter {
 
 
 
-	public Map<String, Integer> setIncrementors( Map<String, String> spec, List<String> incrementingFields ) {
+	public Map<String, Integer> setIncrementors( Map<String, String> spec, Map<String, IncrementType> incrementingFields ) {
 		Map<String, Integer> incrementers = new HashMap<>();
-		for (String incrementer : incrementingFields) {
-			incrementers.put(incrementer, getAsInteger(incrementer, spec));
+		for (Map.Entry<String, IncrementType> entry : incrementingFields.entrySet()) {
+			if (entry.getValue().isIncrementing()) {
+				String incrementer = entry.getKey();
+				incrementers.put(incrementer, getAsInteger(incrementer, spec));
+			}
+			
 		}
 		return incrementers;
 	}
@@ -808,7 +831,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		private final String fontmod;
 		private final Justification justify;
 		private final Orientation orientation; 
-		private final boolean increment;
+		private final IncrementType increment;
 		private final String colourChoice;
 
 		TextField(Map<String, String> defn) {
@@ -828,8 +851,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			justify = model.getAlignment();
 			orientation = model.getRotation();
 			offset = determineOffset(defn.get(FIELD_PARENTBOX_COL), model);
-			String incrementStr = defn.get(FIELD_INCREMENT_COL);
-			increment = incrementStr != null && incrementStr.equalsIgnoreCase("TRUE");
+			increment = IncrementType.getFromKey(defn.get(FIELD_INCREMENT_COL).toUpperCase());
 			colourChoice = defn.get(TYPE_COLOUR) != null ? defn.get(TYPE_COLOUR) : "fore";
 
 		}
@@ -855,7 +877,7 @@ public class PieceMakerMainBox implements SvgWriter {
 				return new XYcoords(( imageBR.getX() - boxTL.getX() ) * scaling,
 				        ( imageBR.getY() - boxTL.getY() ) * scaling);
 			} else {
-				throw new IllegalArgumentException("image " + textModel.getId() + " is not inside its box");
+				throw new IllegalArgumentException("image " + textModel.getId() + " is not inside its box " + box.getId());
 			}
 		}
 		
@@ -896,10 +918,13 @@ public class PieceMakerMainBox implements SvgWriter {
 		}
 
 		public boolean isIncrement() {
+			return increment.isIncrementing();
+		}
+		
+		public IncrementType getIncrementType() {
 			return increment;
 		}
 		
-
 		public XYcoords transformForward(XYcoords original) {
 			final XYcoords result;
 			switch (orientation) {

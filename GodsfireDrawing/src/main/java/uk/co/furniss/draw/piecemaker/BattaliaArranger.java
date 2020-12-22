@@ -58,6 +58,9 @@ public class BattaliaArranger implements PieceArranger {
 		if (specRow.get("number").equals ("#")) {
 			String title = specRow.get("name1").trim();
 			String textColour = specRow.get("textcol");
+			if (textColour == null) {
+				textColour = specRow.get("fore");
+			}
 			if (textColour.equals("")) {
 				textColour = "black";
 			}
@@ -112,8 +115,9 @@ public class BattaliaArranger implements PieceArranger {
     		// write name, in appropriate size
     		List<String> names = new ArrayList<>();
     		for (int i=1; i < 8; i++) {
-    			String name = specRow.get("name" + Integer.toString(i)).trim();
-    			if (name.equals("") ) {
+    			String name;
+				name = specRow.get("name" + Integer.toString(i));
+    			if (name == null || name.trim().equals("") ) {
     				break;
     			}
     			names.add(name);

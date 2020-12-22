@@ -167,6 +167,17 @@ public class PiecesDocument {
 		return new SvgRect(r);
 	}
 	
+	public SvgRect makeEdgeRectangle(Element parentElement, float x, float y, float width, float height, String colour) {
+		Element r = svg.createElement("rect");
+		r.setAttribute("x", Float.toString(x));
+		r.setAttribute("y", Float.toString(y));
+		r.setAttribute("width", Float.toString(width));
+		r.setAttribute("height", Float.toString(height));
+		r.setAttribute("style", "fill:none;stroke-width:0.1;stroke:" + colour);
+		parentElement.appendChild(r);
+		return new SvgRect(r);
+	}
+	
 	public void drawLine( Element outputLayer, XYcoords start, XYcoords end ) {
 		Element line = svg.createElement("line");
 		line.setAttribute("x1", Float.toString(start.getX()));

@@ -99,6 +99,9 @@ public class FullPageArranger implements PieceArranger {
 	protected void drawFiducialLines() {
 		// cols per row is actually the limit for zero-base
 		boolean withGap = gap > 0.1f;
+		if (! withGap) {
+			return;
+		}
 		float x1 = MARGIN - gap;
 		float x2 = x1 + (colsPerRow ) * pieceSpacing + gap;
 		
