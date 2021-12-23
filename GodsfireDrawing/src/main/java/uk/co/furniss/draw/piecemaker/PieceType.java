@@ -1,6 +1,6 @@
 package uk.co.furniss.draw.piecemaker;
 
-public enum PieceType {
+enum PieceType {
 	SQUARE, CUBE, MAPHEX;
 	
 }

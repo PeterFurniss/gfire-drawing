@@ -23,9 +23,9 @@ import org.w3c.dom.NodeList;
  */
 public class XPathUtil {
 
-	public static final String SVG_NS = "http://www.w3.org/2000/svg";
+	static final String SVG_NS = "http://www.w3.org/2000/svg";
 	public static final String XLINK_NS = "http://www.w3.org/1999/xlink";
-	public static final String INKSCAPE_NS = "http://www.inkscape.org/namespaces/inkscape";
+	private static final String INKSCAPE_NS = "http://www.inkscape.org/namespaces/inkscape";
 
 	private static ThreadLocal<Map<String, XPathExpression>> expressionsMap = new ThreadLocal<Map<String, XPathExpression>>() {
 

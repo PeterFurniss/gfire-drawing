@@ -8,12 +8,12 @@ import java.awt.Shape;
 /**
  * a hexagon of defined size, with a shaded colour on the centre
  */
-public class Hex implements TintedShape {
+class Hex implements TintedShape {
 
 		private ColouredShape shape;
 		private final RadialGradientPaint gradient;
 		
-		public Hex(int x, int y, int side, Color colour)  {
+		Hex(int x, int y, int side, Color colour)  {
 			Point[] points = new Point[6];
 			
 			

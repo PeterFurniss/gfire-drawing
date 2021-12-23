@@ -9,8 +9,6 @@ import org.w3c.dom.Element;
 
 public abstract class SvgObject {
 
-	private static final XPathUtil XPU = XPathUtil.getSVG();
-	
 	// the xml as read (and possibly modified)
 	protected final Element element;
 
@@ -59,16 +57,6 @@ public abstract class SvgObject {
 			if (trans.isInternalising()) {
 				element.removeAttribute("transform");
 				transform(trans);
-//				applyTransform(base, trans);
-//				if (trans.isTranslating()) {
-//					if (trans.isScaling()) {
-//						applyTransform(base, trans);
-//					} else {
-//						translate(trans);
-//					}
-//				} else {
-//					scaleTo(base, trans);
-//				}
 				return true;
 			}
 		}
@@ -104,12 +92,29 @@ public abstract class SvgObject {
 	public abstract XYcoords getTopLeft();
 	public abstract XYcoords getBottomRight();
 	public abstract XYcoords getStart();
-
+	
+	public XYcoords getRotationCentre() {
+		if (hasDefinedCentre()) {
+			return getCentre().add(getDefinedCentre());
+		}
+		return getCentre();
+	}
+	
+	protected boolean hasDefinedCentre() {
+		return false;
+	}
+	protected XYcoords getDefinedCentre() {
+		return null;
+	}
 	
 	public XYcoords getCentre() {
+
 		XYcoords tl = getTopLeft();
 		XYcoords br = getBottomRight();
 		XYcoords centre = tl.meanWith(br);
+		if (hasDefinedCentre()) {
+			return centre.add(getDefinedCentre());
+		}
 		LOGGER.debug(" centre of {} is {}", id, centre);
 		LOGGER.debug("          tl was {}, br was {}", tl, br);
 		return centre;

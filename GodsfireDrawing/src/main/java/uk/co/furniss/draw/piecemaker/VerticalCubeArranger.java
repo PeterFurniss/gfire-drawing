@@ -8,7 +8,7 @@ import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.XYcoords;
 
 // draw cube nets
-public class VerticalCubeArranger implements CubeArranger {
+class VerticalCubeArranger implements CubeArranger {
 	// count is for cubes, which are laid out as
 	//   top 
 
@@ -37,6 +37,7 @@ public class VerticalCubeArranger implements CubeArranger {
 	//  pieceSize is the edge of the cube
 	//  gap only applies between the cubes
 	
+
 	public VerticalCubeArranger(float pieceSize, float gap) {
 		this.pieceSize = pieceSize;
 		// non-interlocking
@@ -69,6 +70,7 @@ public class VerticalCubeArranger implements CubeArranger {
 		newOutputPage();
 	}
 
+
 	public void newOutputPage() {
 		pageNumber++;
 		outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(pageNumber+1));
@@ -90,6 +92,7 @@ public class VerticalCubeArranger implements CubeArranger {
 		return getCubeLocation(currentRow, currentCol);
 	}
 
+
 	public XYcoords getCubeLocation( int cubeRow, int cubeCol ) {
 		return new XYcoords( MARGIN + cubeCol * horizSpacing + ( cubeRow % 2 == 0 ? evenExtra : 0), MARGIN + cubeRow * vertSpacing);
 	}
@@ -102,6 +105,7 @@ public class VerticalCubeArranger implements CubeArranger {
 		return getCurrentLocation().add(face.getOffsetVertical(pieceSize));
 	}
 	
+
 	protected int findNumberInPage(int actualPiecesPerPage) {
 		int page = pieceNumber / actualPiecesPerPage;
 
@@ -124,6 +128,7 @@ public class VerticalCubeArranger implements CubeArranger {
 		hideOtherLayers();
 	}
 
+
 	public void hideOtherLayers() {
 		piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);
 	}
@@ -133,6 +138,7 @@ public class VerticalCubeArranger implements CubeArranger {
 		return pageNumber + 1;
 	}
 	
+
 	protected void drawFiducialLines() {
 		// row and cols counts are in cubes, not faces
 		float extra = 2.0f;

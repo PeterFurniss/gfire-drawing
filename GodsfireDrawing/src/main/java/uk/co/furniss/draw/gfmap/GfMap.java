@@ -11,7 +11,7 @@ import uk.co.furniss.draw.dom.XPathUtil;
 import uk.co.furniss.draw.dom.XYcoords;
 import uk.co.furniss.draw.dom.XmlUtil;
 
-public class GfMap {
+class GfMap {
 
 	private static final float PAGE_HEIGHT = 297.0f;
 	private static final float PAGE_WIDTH = 210.0f;
@@ -23,7 +23,7 @@ public class GfMap {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(GfMap.class.getName());
 	
-	public GfMap(String patternFileName, int maxRows, int maxCols, float hexSide, float interHexGap, boolean transpose) {
+	GfMap(String patternFileName, int maxRows, int maxCols, float hexSide, float interHexGap, boolean transpose) {
 		this.maxRows = maxRows;
 		this.maxCols = maxCols;
 		this.transpose = transpose;
@@ -84,6 +84,7 @@ public class GfMap {
         }
 	}
 	
+
 	public void drawLinkLines(int firstRow, int lastRow, int firstCol, int lastCol) {
 		// do the line links between hexes of same colour
 		svg.addComment("linking lines between hexes of the same colour");
@@ -133,8 +134,6 @@ public class GfMap {
         }
 	}
 
-
-	
 	public void markSystems() {
 		setPlanet(2, 2, -4, "Loshan");
         setPlanet(3, 4,  2, "Kol");
@@ -191,6 +190,7 @@ public class GfMap {
 		}
 
 	}
+
 	public void writeToFile(String outFile) {
 	     // from 3  (hexes_5 has the exact path)
         svg.roundNumbers();

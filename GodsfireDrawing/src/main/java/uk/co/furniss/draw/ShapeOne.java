@@ -10,7 +10,11 @@ import javax.swing.JFrame;
 
 //  unused (Jul 2020)
 public class ShapeOne extends JFrame {
-    private static final int NUM_SHAPES = 5;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static final int NUM_SHAPES = 5;
     private static final int NUM_POINTS_PER_SHAPE = 5;
 
     private static final int WIDTH = 640;

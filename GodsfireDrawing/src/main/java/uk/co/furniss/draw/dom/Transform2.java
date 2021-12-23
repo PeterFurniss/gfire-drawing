@@ -3,7 +3,7 @@ package uk.co.furniss.draw.dom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Transform2 implements Trans {
+class Transform2 implements Trans {
 
 	private static final Pattern TRANS_PATTERN = Pattern.compile("(\\w+.*\\))");
 	private final Transformation combined;

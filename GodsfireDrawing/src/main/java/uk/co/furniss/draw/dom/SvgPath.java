@@ -15,10 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
-public class SvgPath extends SvgObject {
+class SvgPath extends SvgObject {
 
 	private XYcoords bottomRightOffset = null;
 	private XYcoords topLeftOffset = null;
+	private XYcoords definedCentre = null;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SvgPath.class.getName());
 	private static final Map<String, List<ParamType>> paramTypes;
@@ -39,8 +40,6 @@ public class SvgPath extends SvgObject {
 		paramTypes.put("t", xy);
 		paramTypes.put("a", Arrays.asList(ParamType.XREL, ParamType.YREL, ParamType.FIXED, ParamType.FIXED, ParamType.FIXED, ParamType.XREL, ParamType.YREL));
 
-		
-		
 	}
 	
 	public SvgPath(Element element) {
@@ -48,7 +47,14 @@ public class SvgPath extends SvgObject {
 		// remove any absolute paths
 		LOGGER.trace("constructing for path {}", element.getAttribute("id"));
 		makePathsRelative();
+		if (element.hasAttribute("inkscape:transform-center-y")) {
+			definedCentre = new XYcoords(element.getAttribute("inkscape:transform-center-x"), element.getAttribute("inkscape:transform-center-y"));
+			LOGGER.info("defined centre is {}", definedCentre);
+		}
 		unscale();
+		if (hasDefinedCentre()) {
+			LOGGER.info("unscaled defined centre is {}", definedCentre);
+		}
 	}
 
 	private SvgPath(Element original, String newId) {
@@ -71,8 +77,21 @@ public class SvgPath extends SvgObject {
 	}
 	
 	private static final Pattern FIRST_IN_PATH = Pattern.compile("m\\s+(\\S*?,\\S*)(.*)");
+
+	@Override
+	protected boolean hasDefinedCentre() {
+		return definedCentre != null;
+	}
+
+	@Override
+	protected XYcoords getDefinedCentre() {
+		return definedCentre;
+	}
+
 	private static final Pattern FIRST_IN_PATH_REPLACE = Pattern.compile("m\\s+\\S*?,\\S*");
 
+	
+	
 	void setStart( XYcoords newStart ) {
 		String dString = element.getAttribute("d");
 		Matcher m = FIRST_IN_PATH_REPLACE.matcher(dString);
@@ -84,6 +103,10 @@ public class SvgPath extends SvgObject {
 
 	@Override
 	public void move( XYcoords movement ) {
+		if (hasDefinedCentre()) {
+			definedCentre = definedCentre.add(movement);
+			LOGGER.info("moved defined centre is {}", definedCentre);
+		}
 		XYcoords oldStart = getStart();
 		XYcoords newStart = oldStart.add(movement);
 		LOGGER.trace("moving from {} to {}", oldStart, newStart);
@@ -91,94 +114,22 @@ public class SvgPath extends SvgObject {
 	}
 
 	
-	
-//	@Override
-//	public void applyTransform( XYcoords base, Transform trans ) {
-//		LOGGER.debug("applyTransform with base {}", base);
-//
-//		if (trans.isScaling()) {
-//			scaleTo(base, trans);
-//		}
-//		translate(trans);
-//		Dattribute dAsReceived = new Dattribute();
-//		LOGGER.debug("pre trans {}", dAsReceived);
-//		Dbuilder dRelative = new Dbuilder();
-//		String cmd = dAsReceived.next();
-//		if (!cmd.equalsIgnoreCase("m")) {
-//			throw new IllegalStateException("Path starts with " + cmd + ". Can't cope");
-//		}
-//		dRelative.add(cmd.toLowerCase());
-//		while (dAsReceived.hasNext()) {
-//			String next = dAsReceived.next();
-//			if (next.matches("[A-Za-z]")) {
-//				// its a command
-//				cmd = next;
-//				dRelative.add(cmd.toLowerCase());
-//			} else {
-//				// it wasn't a command, so go back one to make the next next() give the same
-//				// thing
-//				dAsReceived.backOne();
-//			}
-//			XYcoords point;
-//			if (cmd.equals(cmd.toLowerCase())) {
-//				switch (cmd) {
-//				case "m": // relative move
-//					cmd = "l"; // move is only for one segment
-//				case "l": // relative line
-//				case "t": // shortcut quadratic
-//					dRelative.add(trans.apply(dAsReceived.nextPair()));
-//					break;
-//				case "h": // relative horizontal
-//					point = new XYcoords(dAsReceived.nextValue(), 0.0f);
-//					dRelative.add(trans.apply(point).getX());
-//					break;
-//				case "v":
-//					point = new XYcoords(0.0f, dAsReceived.nextValue());
-//					dRelative.add(trans.apply(point).getY());
-//					break;
-//				case "z":
-//					// reset where we are
-//					break;
-//				case "c": // relative bezier - 3 xy pairs, last is next node
-//					dRelative.add(trans.apply(dAsReceived.nextPair()));
-//					dRelative.add(trans.apply(dAsReceived.nextPair()));
-//					dRelative.add(trans.apply(dAsReceived.nextPair()));
-//					break;
-//				case "s": // shortcut bezier - 2 xy pairs
-//				case "q": // quadratic
-//					dRelative.add(trans.apply(dAsReceived.nextPair()));
-//					dRelative.add(trans.apply(dAsReceived.nextPair()));
-//					break;
-//
-//				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
-//				          // destinatioin (x,y)
-//					// i think this probably requires proportionality
-//					dRelative.add(trans.apply(dAsReceived.nextPair()));
-//					dRelative.copy(dAsReceived, 3);
-//					dRelative.add(trans.apply(dAsReceived.nextPair()));
-//					break;
-//				default:
-//					throw new IllegalStateException(
-//					        "unsupported relative path command " + cmd + " from " + dAsReceived);
-//				}
-//			}
-//		}
-//		LOGGER.debug("after trans {}", dRelative.getD());
-//		element.setAttribute("d", dRelative.getD());
-//		}
-//		
-//		if (trans.isTranslating()) {
-//			translate(trans);
-//		}
-//	}
 
 	@Override
 	public void translate( Trans trans ) {
+		if (hasDefinedCentre()) {
+			definedCentre = trans.translate(definedCentre);
+			LOGGER.info("translated defined centre is {}", definedCentre);
+		}
 		setStart(trans.translate(getStart()));
 	}
 
 	@Override
 	public void transform(Trans trans ) {
+		if (hasDefinedCentre()) {
+			definedCentre = trans.translate(definedCentre);
+			LOGGER.info("transformed defined centre is {}", definedCentre);
+		}
 		XYcoords base = XYcoords.ORIGIN;
 		Dattribute dIn = new Dattribute();
 		LOGGER.info("pre transform by {}, d={}", trans, dIn);
@@ -239,40 +190,6 @@ public class SvgPath extends SvgObject {
 					
 				}
 			
-//				case "m": // relative move
-//					cmd = "l"; // move is only for one segment
-//				case "l": // relative line
-//				case "t": // shortcut quadratic
-//					dOut.add(trans.scale(dIn.nextPair()));
-//					break;
-//				case "h": // relative horizontal
-//				case "v":
-//					dOut.add(trans.scale(dIn.nextValue()));
-//					break;
-//				case "z":
-//					break;
-//				case "c": // relative bezier - 3 xy pairs, last is next node
-//					dOut.add(trans.scale(dIn.nextPair()));
-//					dOut.add(trans.scale(dIn.nextPair()));
-//					dOut.add(trans.scale(dIn.nextPair()));
-//					break;
-//				case "s": // shortcut bezier - 2 xy pairs
-//				case "q": // quadratic
-//					dOut.add(trans.scale(dIn.nextPair()));
-//					dOut.add(trans.scale(dIn.nextPair()));
-//					break;
-//
-//				case "a": // arc segment - centre (x,y) _ x-rotation _ largearcflag _ sweep_flag _
-//				          // destinatioin (x,y)
-//					// i think this probably requires proportionality
-//					dOut.add(trans.scale(dIn.nextPair()));
-//					dOut.copy(dIn, 3);
-//					dOut.add(trans.scale(dIn.nextPair()));
-//					break;
-//				default:
-//					throw new IllegalStateException(
-//					        "unsupported relative path command " + cmd + " from " + dIn);
-//				}
 			}
 		}
 		LOGGER.info("   {} after transform {}", getId(), dOut.getD());
@@ -285,6 +202,9 @@ public class SvgPath extends SvgObject {
 	@Override
 	public void scaleTo(XYcoords base, Trans trans ) {
 
+		if (definedCentre != null) {
+			definedCentre = trans.scaleTo(base, definedCentre);
+		}
 		Dattribute dIn = new Dattribute();
 		LOGGER.debug("pre scaling to {}, d={}", base, dIn);
 		Dbuilder dOut = new Dbuilder();
@@ -310,7 +230,6 @@ public class SvgPath extends SvgObject {
 				// thing
 				dIn.backOne();
 			}
-			XYcoords point;
 			if (cmd.equals(cmd.toLowerCase())) {
 				switch (cmd) {
 				case "m": // relative move
@@ -392,9 +311,6 @@ public class SvgPath extends SvgObject {
 	 * @return
 	 */
 	private void calculateOffsetsFromStart() {
-			// could try to keep these but gets complex
-			String dString = element.getAttribute("d");
-			// could do this with a hairy regex
 			Dattribute pieces = new Dattribute();
 			XYcoords tl = XYcoords.ORIGIN;
 			XYcoords br = XYcoords.ORIGIN;

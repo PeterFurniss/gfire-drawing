@@ -10,7 +10,7 @@
 		<level value="warn" />
 	</logger>
 	<logger name="uk.co.furniss.draw.dom.SvgPath">
-		<level value="warn" />
+		<level value="debug" />
 	</logger>
 	<logger name="uk.co.furniss.draw.dom.SvgObject">
 		<level value="warn" />

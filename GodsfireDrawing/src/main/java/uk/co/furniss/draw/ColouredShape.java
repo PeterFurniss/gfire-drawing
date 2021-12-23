@@ -6,7 +6,7 @@ import java.awt.Polygon;
 import java.awt.Shape;
 
 // extracted from https://stackoverflow.com/questions/1557835/rendering-vector-shapes-in-java?rq=1
-public class ColouredShape implements TintedShape {
+class ColouredShape implements TintedShape {
 
     private Polygon outline;
     private Color color;

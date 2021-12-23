@@ -10,7 +10,7 @@ import uk.co.furniss.draw.dom.XPathUtil;
 import uk.co.furniss.draw.dom.XYcoords;
 
 // i think this cracks the hand-drawn pattern hexes to understand them
-public class PatternHex {
+class PatternHex {
 
 	private static final XPathUtil XPU = XPathUtil.getSVG();
 	

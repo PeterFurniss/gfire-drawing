@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 import org.w3c.dom.Element;
 
-public class Rectangle implements Comparable<Rectangle>  {
+class Rectangle implements Comparable<Rectangle>  {
 
 	private final float size;
 	private String id;

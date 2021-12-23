@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ExcelBook {
-	private final String filePath;
 	private final String bookName;
 	private final Workbook workbook;
 	private FileInputStream inputStream;
@@ -28,8 +26,6 @@ public class ExcelBook {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ExcelBook.class.getName());
 	
 	public ExcelBook(String filePath) throws FileNotFoundException {
-		this.filePath = filePath;
-
 		inputStream = new FileInputStream(new File(filePath));
 
 		try {

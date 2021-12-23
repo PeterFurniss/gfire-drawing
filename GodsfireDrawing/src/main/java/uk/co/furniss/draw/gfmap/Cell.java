@@ -3,7 +3,7 @@ package uk.co.furniss.draw.gfmap;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Cell {
+class Cell {
 
 	private final int row;
 	private final int col;
@@ -13,7 +13,7 @@ public class Cell {
 	private static final int bottom = -6;
 	private static final int top = 5;
 	
-	public Cell(int row, int col, int level) {
+	Cell(int row, int col, int level) {
 		super();
 		this.row = row;
 		this.col = col;

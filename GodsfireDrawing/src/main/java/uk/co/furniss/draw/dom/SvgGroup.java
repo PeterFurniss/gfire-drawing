@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
 
-public class SvgGroup extends SvgObject {
+class SvgGroup extends SvgObject {
 
 	private static final XPathUtil XPU = XPathUtil.getSVG();
 	
@@ -17,8 +17,29 @@ public class SvgGroup extends SvgObject {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SvgGroup.class.getName());
 	
+	private XYcoords definedCentre = null;
+
 	public SvgGroup (Element originalElement) {
 		super(originalElement);
+		String xOffset, yOffset;
+		xOffset = element.getAttribute("inkscape:transform-center-x");
+		yOffset = element.getAttribute("inkscape:transform-center-y");
+		if (xOffset.length() > 0) {
+			if (yOffset.length() > 0) {
+				definedCentre = new XYcoords(xOffset, yOffset);
+			} else {
+				definedCentre = new XYcoords(xOffset, "0");
+			}
+			LOGGER.info("defined centre is {}", definedCentre);
+		} else {
+			if (yOffset.length() > 0) {
+				definedCentre = new XYcoords("0", yOffset);
+				element.removeAttribute("inkscape:transform-center-y");
+				LOGGER.info("defined centre is {}", definedCentre);
+			}
+		}
+
+
 		List<Element> childElements = XPU.findElements(originalElement, "./*");
 		for (Element child : childElements) {
 			children.add(SvgObject.makeSvgObject(child));
@@ -44,6 +65,17 @@ public class SvgGroup extends SvgObject {
 		return cloneObject;
 	}
 	
+	@Override
+	protected boolean hasDefinedCentre() {
+		return definedCentre != null;
+	}
+
+	@Override
+	protected XYcoords getDefinedCentre() {
+		return definedCentre;
+	}
+
+
 	
 	@Override
 	public XYcoords getTopLeft() {

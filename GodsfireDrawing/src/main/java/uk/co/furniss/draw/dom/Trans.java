@@ -1,6 +1,6 @@
 package uk.co.furniss.draw.dom;
 
-public interface Trans {
+interface Trans {
 
 	XYcoords apply( XYcoords original );
 

@@ -12,7 +12,7 @@ import uk.co.furniss.draw.dom.XPathUtil;
 import uk.co.furniss.draw.dom.XYcoords;
 
 // find the pattern hexes in the document and remember things about them
-public class GfPatternHexes {
+class GfPatternHexes {
 
 	private static final XPathUtil XPU = XPathUtil.getSVG();
 
@@ -32,6 +32,7 @@ public class GfPatternHexes {
 	}
 
 	private final float hexWidth;
+
 
 	public GfPatternHexes(Element svgDoc) {
 		for (HexColour colour : HexColour.values()) {
@@ -57,10 +58,12 @@ public class GfPatternHexes {
 		return patternHexes.get(colour);
 	}
 	
+
 	public float getCornerX(int direction) {
 		return hexCorners.get(direction).getX();
 	}
 	
+
 	public float getCornerY(int direction) {
 		return hexCorners.get(direction).getY();
 	}

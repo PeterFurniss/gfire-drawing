@@ -3,7 +3,7 @@ package uk.co.furniss.draw.piecemaker;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class TallyCounter {
+class TallyCounter {
 
 	private final Map<String, Integer> counter = new LinkedHashMap<>();
 	

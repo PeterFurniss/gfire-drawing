@@ -4,7 +4,7 @@ import org.w3c.dom.Element;
 
 import uk.co.furniss.draw.dom.PiecesDocument;
 
-public interface SvgWriter {
+interface SvgWriter {
 
 	void setOutputLayer( Element outputLayer );
 

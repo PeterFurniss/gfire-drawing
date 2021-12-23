@@ -1,6 +1,6 @@
 package uk.co.furniss.draw.gfmap;
 
-public enum HexColour 
+enum HexColour 
 //		{RED (0.0f, 0.0f, "rgb(255,0,0)"),
 //		GREEN(1.5f, 1.0f, "rgb(0,255,0)"),
 //		BLUE (0.0f, 2.0f, "rgb(0,0,255)");

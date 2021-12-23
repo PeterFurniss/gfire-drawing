@@ -31,24 +31,25 @@ public class PiecesDocument {
 	private Element libraryLayer;
 	private Element defs;
 	private static final XPathUtil XPU = XPathUtil.getSVG();
-	public static final String TEMPLATE_SUFFIX = "_template";
+	private static final String TEMPLATE_SUFFIX = "_template";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(PiecesDocument.class.getName());
 
 	public PiecesDocument(String inputFile) {
-		
+		// read in the image definitions
         svgDoc = XmlUtil.deserialiseXmlFile(inputFile);
 
         svg = new SVGbuilder(svgDoc);
         
         // I can't remember why this was done
-        svg.ensureNamespace("xlink", XPathUtil.XLINK_NS, svgDoc);
+        SVGbuilder.ensureNamespace("xlink", XPathUtil.XLINK_NS, svgDoc);
         
         // by default,lookup in top level
         libraryLayer = svgDoc;
         
         defs = XPU.findElement(svgDoc,  "defs");
         if (defs == null) {
+        	// an SVG file always as a defs section, possibly empty
         	throw new IllegalStateException("Can't find a defs element");
         }
 
@@ -188,7 +189,7 @@ public class PiecesDocument {
 		line.setAttribute("stroke-width", "0.1");
 		outputLayer.appendChild(line);
 	}
-	private static Pattern ASTER_PATTERN = Pattern.compile("(.*)aster(.*)");
+//	private static Pattern ASTER_PATTERN = Pattern.compile("(.*)aster(.*)");
 	// escape (bold, underline, italic) applies only for that sequence of alphanumerics
 	private static Pattern ESCAPE_PATTERN = Pattern.compile("(.*?)\\\\(\\w)(\\w+)(.*)");
 	// unicode pattern will be applied repeatedl

@@ -7,7 +7,11 @@ import javax.swing.JFrame;
 
 public class JFrameGraphic extends JFrame {
 
-    private static final int WIDTH = 640;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static final int WIDTH = 640;
     private static final int HEIGHT = 480;
 	private Iterable<ShapeProvider> shapeProviders;
 

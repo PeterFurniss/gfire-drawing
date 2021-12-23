@@ -6,7 +6,7 @@ import java.util.stream.Stream;
 
 import uk.co.furniss.draw.dom.XYcoords;
 
-public enum CubeFace {
+enum CubeFace {
 	TOP(0,0), FRONT(0,1), UNDER(0,2), LEFT(1,2), BACK(1,3), RIGHT(1,4);
 	
 	

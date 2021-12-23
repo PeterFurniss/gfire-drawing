@@ -6,7 +6,7 @@ public class XYcoords {
 	private final float x;
 	private final float y;
 	public static final XYcoords MAXIMUM = new XYcoords(10000.0f, 10000.0f);
-	public static final XYcoords ORIGIN = new XYcoords(0.0f, 0.0f);
+	static final XYcoords ORIGIN = new XYcoords(0.0f, 0.0f);
 	
 	public XYcoords(String xStr, String yStr) {
 		this.x = Float.parseFloat(xStr);

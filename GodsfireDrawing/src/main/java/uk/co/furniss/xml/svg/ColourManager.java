@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ColourManager {
+class ColourManager {
 
 	private static final Map<String, String> KNOWN_COLOURS = new HashMap<>();
 	private static final Map<String, String> ROTATE_ONCE = new HashMap<>();

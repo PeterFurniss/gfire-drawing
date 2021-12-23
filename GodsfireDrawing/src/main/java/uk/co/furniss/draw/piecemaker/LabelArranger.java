@@ -2,7 +2,7 @@ package uk.co.furniss.draw.piecemaker;
 
 import uk.co.furniss.draw.dom.XYcoords;
 
-public class LabelArranger extends FullPageArranger {
+class LabelArranger extends FullPageArranger {
 
 	private static final float LABEL_WIDTH = 63.5f;
 	private static final float LABEL_HEIGHT = 38.1f;

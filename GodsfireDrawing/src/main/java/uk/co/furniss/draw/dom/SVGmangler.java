@@ -14,7 +14,7 @@ import uk.co.furniss.xml.svg.BaseElement;
 
 public class SVGmangler  {
 	
-	public static final XPathUtil XPU = XPathUtil.getSVG();
+	private static final XPathUtil XPU = XPathUtil.getSVG();
 
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SVGmangler.class.getName());
@@ -27,10 +27,12 @@ public class SVGmangler  {
 		super();
 	}
 
+
 	public static List<Element> getLayerElements(Element docElement) {
 		return XPU.findElements(docElement, "//g[@inkscape:groupmode='layer']");
 	}
 	
+
 	public static List<String> getLayerNames(Element docElement) {
 		List<Element> layerElements = getLayerElements(docElement);
 		List<String> names = new ArrayList<>();
@@ -41,9 +43,11 @@ public class SVGmangler  {
 		
 	}
 	
+
 	public static Element getLayerElement( Element docElement, String layerName ) {
 		return XPU.findElement(docElement, "//g[@inkscape:groupmode='layer' and @inkscape:label='" + layerName + "']");
 	}
+
 
 	public static SvgObject getSvgObject(Element topElement, String name) {
 		LOGGER.debug("Looking in " + topElement.getAttribute("id") + " for " + name);

@@ -30,7 +30,7 @@ import uk.co.furniss.xlsx.ExcelBook;
  * numbers, which silhouette and colours (that will take som designing). piece
  * silhouette is an image from an input svg file. object has a specific name
  */
-public class PieceMakerMainBox implements SvgWriter {
+class PieceMaker implements SvgWriter {
 
 
 	private static final String TYPE_TEXT = "text";
@@ -72,7 +72,7 @@ public class PieceMakerMainBox implements SvgWriter {
 	private static final String FIELD_COLOURCHOICE_COL = TYPE_COLOUR;
 	private static final String FIELD_INCREMENT_COL = "increment";
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(PieceMakerMainBox.class.getName());
+	private static final Logger LOGGER = LoggerFactory.getLogger(PieceMaker.class.getName());
 	private static final double COS30 = Math.cos(Math.PI/ 6.0);
 	private static final String SVG_SUFFIX = ".svg";
 
@@ -148,7 +148,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		if (options.contains("ob")) {
 			parameters.put(PARAM_OB, PARAM_OB);
 		}
-		PieceMakerMainBox instance = new PieceMakerMainBox(parameters, tbook);
+		PieceMaker instance = new PieceMaker(parameters, tbook);
 
 		instance.drawPieces();
 		instance.writeOutputSvg();
@@ -191,7 +191,7 @@ public class PieceMakerMainBox implements SvgWriter {
 	private boolean outline;
 
 	
-	private PieceMakerMainBox( Map<String, String> parameters, ExcelBook tbook ) {
+	private PieceMaker( Map<String, String> parameters, ExcelBook tbook ) {
 		pieceType = PieceType.valueOf(parameters.get(PARAM_PIECETYPE).toUpperCase());
 		if (pieceType == null) {
 			throw new IllegalArgumentException("Unknown piece type " + parameters.get(PARAM_PIECETYPE));
@@ -275,6 +275,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 
 	
+
 	public void organiseFields( List<Map<String, String>> fieldDefinitions ) {
 		// organise the text and image fields.  
 		//    image fields are questions of where
@@ -312,6 +313,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			}
 		}
 	}
+
 
 	public void drawPieces( ) {
 		
@@ -358,6 +360,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		        		+ pieceSize + "mm");
 		
 	}
+
 
 
 
@@ -447,6 +450,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		return totalPieces;
 	}
 	
+
 	public int drawMapHexes( Map<String, IncrementType> incrementingFields, String startTransformScaling, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
@@ -529,6 +533,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		
 	}
 
+
 	public int drawCubePieces( Map<String, IncrementType> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		// transform the single list of specs into cube sets
@@ -567,7 +572,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			totalPieces += number;
 			for (int i = 0; i < number; i++) {
 				
-				XYcoords cubeLocation = arranger.getNextLocation();
+//				XYcoords cubeLocation = arranger.getNextLocation();
 				for (CubeFace face : CubeFace.values()) {
 					Map<String, String> spec = cubeSpec.getFace(face);
 				
@@ -630,6 +635,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 
 
+
 	public Map<String, Integer> setIncrementors( Map<String, String> spec, Map<String, IncrementType> incrementingFields ) {
 		Map<String, Integer> incrementers = new HashMap<>();
 		for (Map.Entry<String, IncrementType> entry : incrementingFields.entrySet()) {
@@ -641,6 +647,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		}
 		return incrementers;
 	}
+
 
 
 
@@ -656,6 +663,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 
 
+
 	public void setForeColours( Map<String, String> spec, Map<String, String> foreColours ) {
 		for (String choice : colourChoices) {
 			String colour = spec.get(choice);
@@ -665,6 +673,7 @@ public class PieceMakerMainBox implements SvgWriter {
 			}
 		}
 	}
+
 
 
 
@@ -693,6 +702,7 @@ public class PieceMakerMainBox implements SvgWriter {
 	}
 
 	
+
 
 	public void writeOutputSvg(  ) {
 		piecesDoc.writeToFile(outputFilePath);
@@ -745,7 +755,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 		ImageField(Map<String, String> defn, String imageFile) {
 			name = defn.get(FIELD_NAME_COL);
-			this.boxNamePattern = defn.get(PieceMakerMainBox.FIELD_PARENTBOX_COL);
+			this.boxNamePattern = defn.get(PieceMaker.FIELD_PARENTBOX_COL);
 			this.colourChoice = defn.get(TYPE_COLOUR) != null ? defn.get(TYPE_COLOUR) : "fore";
 			retainColour = colourChoice.equalsIgnoreCase(PROPER_COLOUR);
 
@@ -795,6 +805,7 @@ public class PieceMakerMainBox implements SvgWriter {
 
 	}
 	
+
 	public XYcoords findOffsetInBox( SvgObject image, SvgObject box) {
 		XYcoords boxTL = box.getTopLeft();
 		LOGGER.debug("box {}, TL {}", box.getId(), boxTL);
@@ -972,6 +983,7 @@ public class PieceMakerMainBox implements SvgWriter {
 		}
 
 	}
+
 
 	public static int getAsInteger( String key, Map<String, String> spec ) {
 		String asString = spec.get(key);

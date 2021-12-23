@@ -1,6 +1,6 @@
 package uk.co.furniss.draw.gfmap;
 
-public class Levels {
+class Levels {
 
 	private static HexColour[] levelColour = new HexColour[] 
 			{ HexColour.BLUE, HexColour.GREEN, HexColour.RED,

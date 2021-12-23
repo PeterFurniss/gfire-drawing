@@ -2,7 +2,7 @@ package uk.co.furniss.draw.dom;
 
 import org.w3c.dom.Element;
 
-public class SvgRect extends SvgObject {
+class SvgRect extends SvgObject {
 
 	private  float x;
 	private  float y;

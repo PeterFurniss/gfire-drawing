@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public enum IncrementType {
+enum IncrementType {
 	NONE(""), INTEGER("int", "integer"), PAD3("true","pad3", "000"), ROMAN("roman");
 	
 	private static final Map<String, IncrementType> keyMap = new HashMap<>();

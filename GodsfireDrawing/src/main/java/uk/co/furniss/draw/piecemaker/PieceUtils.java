@@ -3,7 +3,7 @@ package uk.co.furniss.draw.piecemaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PieceUtils {
+class PieceUtils {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(PieceUtils.class.getName());
 	

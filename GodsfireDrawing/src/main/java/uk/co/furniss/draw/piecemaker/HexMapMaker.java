@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -29,7 +28,7 @@ import uk.co.furniss.xlsx.ExcelBook;
  * numbers, which silhouette and colours (that will take som designing). piece
  * silhouette is an image from an input svg file. object has a specific name
  */
-public class HexMapMaker implements SvgWriter {
+class HexMapMaker implements SvgWriter {
 
 
 	private static final String TYPE_TEXT = "text";
@@ -219,6 +218,7 @@ public class HexMapMaker implements SvgWriter {
 
 
 	
+
 	public void organiseFields( List<Map<String, String>> fieldDefinitions ) {
 		// organise the text and image fields.  
 		//    image fields are questions of where
@@ -255,6 +255,7 @@ public class HexMapMaker implements SvgWriter {
 		}
 	}
 
+
 	public void drawPieces( ) {
 		
 		List<String> incrementingFields = textFields.stream().filter(TextField::isIncrement).map(TextField::getName)
@@ -289,6 +290,7 @@ public class HexMapMaker implements SvgWriter {
 		        		+ pieceSize + "mm");
 		
 	}
+
 
 
 
@@ -385,6 +387,7 @@ public class HexMapMaker implements SvgWriter {
 		
 	}
 
+
 	public int drawCubePieces( List<String> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		// transform the single list of specs into cube sets
@@ -422,7 +425,7 @@ public class HexMapMaker implements SvgWriter {
 			totalPieces += number;
 			for (int i = 0; i < number; i++) {
 				
-				XYcoords cubeLocation = pageArranger.getNextLocation();
+//				XYcoords cubeLocation = pageArranger.getNextLocation();
 				for (CubeFace face : CubeFace.values()) {
 					Map<String, String> spec = cubeSpec.getFace(face);
 				
@@ -485,6 +488,7 @@ public class HexMapMaker implements SvgWriter {
 
 
 
+
 	public Map<String, Integer> setIncrementors( Map<String, String> spec, List<String> incrementingFields ) {
 		Map<String, Integer> incrementers = new HashMap<>();
 		for (String incrementer : incrementingFields) {
@@ -492,6 +496,7 @@ public class HexMapMaker implements SvgWriter {
 		}
 		return incrementers;
 	}
+
 
 
 
@@ -510,6 +515,7 @@ public class HexMapMaker implements SvgWriter {
 		}
 		return backColour;
 	}
+
 
 
 
@@ -536,6 +542,7 @@ public class HexMapMaker implements SvgWriter {
 	}
 
 	
+
 
 	public void writeOutputSvg(  ) {
 		piecesDoc.writeToFile(outputFilePath);
@@ -587,6 +594,17 @@ public class HexMapMaker implements SvgWriter {
 		private final boolean colourProper;
 
 		ImageField(Map<String, String> defn, String imageFile) {
+			// special case to allow an image to extend outside the box
+			// (didn't work)
+//			String inputName = defn.get(FIELD_NAME_COL);
+//			if (inputName.contains("/")) {
+//				name = inputName.replaceFirst("/.*","");
+//				this.boxNamePattern = inputName.replaceFirst(".*/","");
+//			} else {
+//				name = inputName;
+//				this.boxNamePattern = defn.get(HexMapMaker.FIELD_PARENTBOX_COL);
+//			}
+			
 			name = defn.get(FIELD_NAME_COL);
 			this.boxNamePattern = defn.get(HexMapMaker.FIELD_PARENTBOX_COL);
 			this.colourChoice = defn.get(TYPE_COLOUR) != null ? defn.get(TYPE_COLOUR) : "fore";
@@ -637,6 +655,7 @@ public class HexMapMaker implements SvgWriter {
 
 	}
 	
+
 	public XYcoords findOffsetInBox( SvgObject image, SvgObject box) {
 		XYcoords boxTL = box.getTopLeft();
 		LOGGER.debug("box {}, TL {}", box.getId(), boxTL);
@@ -810,6 +829,7 @@ public class HexMapMaker implements SvgWriter {
 		}
 
 	}
+
 
 	public static int getAsInteger( String key, Map<String, String> spec ) {
 		String asString = spec.get(key);

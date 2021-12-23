@@ -10,11 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Element;
 
-import net.sf.saxon.expr.instruct.ForEach;
 import uk.co.furniss.draw.dom.PiecesDocument;
 import uk.co.furniss.draw.dom.XYcoords;
 
-public class BattaliaArranger implements PieceArranger {
+class BattaliaArranger implements PieceArranger {
 
 	private static final float PAGE_WIDTH = 210.0f;
 	private static final float PAGE_HEIGHT = 297.0f;
@@ -25,7 +24,7 @@ public class BattaliaArranger implements PieceArranger {
 	protected final float pieceSize;
 	private final int rowsPerPage;
 	private final int colsPerRow;
-	private final float piecePixels;
+//	private final float piecePixels;
 	protected int pieceNumber;
 	protected int pageNumber;
 	private int currentRow;
@@ -42,7 +41,7 @@ public class BattaliaArranger implements PieceArranger {
 		this.pieceSize = pieceSize;
 		colsPerRow = (int) ( ( PAGE_WIDTH - 2 * ( MARGIN  ) ) / pieceSize ) ;
 		rowsPerPage = (int) ( ( PAGE_HEIGHT - 2 * ( MARGIN  ) ) / pieceSize ) ;
-		piecePixels = pieceSize / 0.264583f;
+//		piecePixels = pieceSize / 0.264583f;
 		pageNumber = -1;
 		currentRow = 0;
 		groupCol = 0;
@@ -54,9 +53,15 @@ public class BattaliaArranger implements PieceArranger {
 	@Override
 	public void setGroup( Map<String, String> specRow ) {
 		String layout = specRow.get("Layout");
+		if (layout == null) {
+			throw new IllegalArgumentException("No column 'Layout' found in definition sheet");
+		}
 		Matcher layMatch = LAYOUT_PATTERN.matcher(layout);
 		if (specRow.get("number").equals ("#")) {
 			String title = specRow.get("name1").trim();
+			if (title == null) {
+				throw new IllegalArgumentException("No column 'name1' found in definition sheet");
+			}
 			String textColour = specRow.get("textcol");
 			if (textColour == null) {
 				textColour = specRow.get("fore");
@@ -193,6 +198,7 @@ public class BattaliaArranger implements PieceArranger {
 	public void finish() {
 		hideOtherLayers();
 	}
+
 
 	public void hideOtherLayers() {
 		piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);

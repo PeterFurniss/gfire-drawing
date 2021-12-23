@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TransformationRevised {
+class TransformationRevised {
 
 	private final float scaleX;
 	private final float scaleY;
@@ -20,6 +20,7 @@ public class TransformationRevised {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Transformation.class.getName());
 	
+
 	public TransformationRevised(String function) {
 		Matcher m = FUNCTION_PATTERN.matcher(function);
 		if (m.matches()) {
@@ -93,6 +94,7 @@ public class TransformationRevised {
 		}
 	}
 	
+
 	public XYcoords scaleTo(XYcoords base, XYcoords original) {
 		if (scaling) {
 			return original.scaleTo(base,  scaleX, scaleY);
@@ -108,10 +110,12 @@ public class TransformationRevised {
 		throw new IllegalStateException("Cannot scale single value with scaleX " + scaleX + ", scaleY " + scaleY);
 	}
 	
+
 	public XYcoords translate(XYcoords original) {
 		return new XYcoords(original.getX() + translateX, original.getY() + translateY);
 	}
 	
+
 	public XYcoords transform( XYcoords original ) {
 		float x = original.getX();
 		float y = original.getY();

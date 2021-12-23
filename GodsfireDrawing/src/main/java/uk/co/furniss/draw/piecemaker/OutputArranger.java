@@ -1,6 +1,6 @@
 package uk.co.furniss.draw.piecemaker;
 
-public interface OutputArranger {
+interface OutputArranger {
 
 	void start( SvgWriter writer );
 

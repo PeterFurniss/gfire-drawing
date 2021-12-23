@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Transformation {
+class Transformation {
 
 	private final float a;
 	private final float b;
@@ -24,6 +24,7 @@ public class Transformation {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(Transformation.class.getName());
 	
+
 	public Transformation(String function) {
 		Matcher m = FUNCTION_PATTERN.matcher(function);
 		if (m.matches()) {
@@ -140,6 +141,7 @@ public class Transformation {
 		return Math.abs(a - b) < 0.001f;
 	}
 	
+
 	public Transformation(String method, float a, float b, float c, float d, float e, float f) {
 		super();
 		this.method = method;
@@ -157,6 +159,7 @@ public class Transformation {
 	}
 
 
+
 	public Transformation combine(Transformation other) {
 		return new Transformation(
 					"combine", 
@@ -167,6 +170,7 @@ public class Transformation {
 					a * other.e + c * other.f + e, b * other.e + d * other.f + f);
 	}
 	
+
 	public XYcoords transform( XYcoords original ) {
 		float x = original.getX();
 		float y = original.getY();
@@ -181,6 +185,7 @@ public class Transformation {
 		return new XYcoords(x * a + y * c , x * b + y * d );
 	}
 	
+
 	public XYcoords translate(XYcoords original) {
 		return original.add(translation);
 	}
@@ -196,12 +201,13 @@ public class Transformation {
 		return scaling;
 	}
 
-	public float scale( float singleValue ) {
+	float scale( float singleValue ) {
 		if (! scaling) {
 			LOGGER.warn("scaling single value for non-scaling transform {}", this);
 		}
 		return scaleFactor * singleValue;
 	}
+
 
 	public XYcoords scaleTo(XYcoords base, XYcoords original) {
 		if (scaling) {

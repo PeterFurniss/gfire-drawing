@@ -4,7 +4,7 @@ import java.util.Map;
 
 import uk.co.furniss.draw.dom.XYcoords;
 
-public interface PieceArranger extends OutputArranger {
+interface PieceArranger extends OutputArranger {
 
 	XYcoords getNextLocation();
 

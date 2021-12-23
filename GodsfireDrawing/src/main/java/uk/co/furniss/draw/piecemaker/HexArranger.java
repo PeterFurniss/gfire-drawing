@@ -8,7 +8,7 @@ import uk.co.furniss.draw.dom.XYcoords;
 /**
  * place hexes with points e-w, odd number column below the even
  */
-public class HexArranger implements OutputArranger {
+class HexArranger implements OutputArranger {
 
 	private static final float PAGE_WIDTH = 210.0f;
 	private static final float PAGE_HEIGHT = 297.0f;
@@ -24,8 +24,9 @@ public class HexArranger implements OutputArranger {
 	private int maxCol;
 	protected PiecesDocument piecesDoc;
 	protected Element outputLayer;
-	private SvgWriter writer;
+
 	private static final double COS30 = Math.cos(Math.PI/ 6.0);
+
 
 	public HexArranger(float hexSide, float overlap) {
 		this.hexSide = hexSide;
@@ -38,7 +39,6 @@ public class HexArranger implements OutputArranger {
 	 */
 	@Override
 	public void start(SvgWriter writer) {
-		this.writer = writer;
 		this.piecesDoc = writer.getOutputDocument();
 		maxRow = 0;
 		maxCol = 0;
@@ -57,6 +57,7 @@ public class HexArranger implements OutputArranger {
 	 * @param col hex column (one-based)
 	 * @return
 	 */
+
 	public XYcoords getHexLocation(int row, int col) {
 		maxRow = Math.max(maxRow,  row);
 		maxCol = Math.max(maxCol,  col);
@@ -77,6 +78,7 @@ public class HexArranger implements OutputArranger {
 	public void finish() {
 		hideOtherLayers();
 	}
+
 
 	public void hideOtherLayers() {
 		piecesDoc.hideAllLayersButOne(OUTPUT_LAYER_NAME);
