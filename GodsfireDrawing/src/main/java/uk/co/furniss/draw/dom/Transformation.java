@@ -142,7 +142,7 @@ class Transformation {
 	}
 	
 
-	public Transformation(String method, float a, float b, float c, float d, float e, float f) {
+	private Transformation(String method, float a, float b, float c, float d, float e, float f) {
 		super();
 		this.method = method;
 		this.a = a;

@@ -179,7 +179,7 @@ public class ExcelBook {
 
 	}
 
-	public String convertAsNumber( Cell cell ) {
+	private String convertAsNumber( Cell cell ) {
 		double asDouble = cell.getNumericCellValue();
 		if (asDouble == (int) asDouble) {
 			return Integer.toString((int) asDouble);

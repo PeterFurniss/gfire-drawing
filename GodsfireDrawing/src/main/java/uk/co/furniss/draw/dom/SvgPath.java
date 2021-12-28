@@ -92,7 +92,7 @@ class SvgPath extends SvgObject {
 
 	
 	
-	void setStart( XYcoords newStart ) {
+	private void setStart( XYcoords newStart ) {
 		String dString = element.getAttribute("d");
 		Matcher m = FIRST_IN_PATH_REPLACE.matcher(dString);
 		String newD = m.replaceFirst("m " + newStart.toString());

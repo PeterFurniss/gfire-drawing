@@ -59,7 +59,7 @@ public class XPathUtil {
 	 * 
 	 * @param nameSpace  default namespace
 	 */
-	public XPathUtil(String nameSpace) {
+	private XPathUtil(String nameSpace) {
 		this();
 		((net.sf.saxon.xpath.XPathEvaluator) xpath).getStaticContext().setDefaultElementNamespace(nameSpace);
 	}

@@ -31,7 +31,7 @@ public class SvgText extends SvgObject {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SvgText.class.getName());
 	
-	public SvgText(Element textElement) {
+	SvgText(Element textElement) {
 		super(textElement);
 		LOGGER.debug("text element {}", getId());
 		this.x = Float.parseFloat(textElement.getAttribute("x"));
@@ -164,12 +164,12 @@ public class SvgText extends SvgObject {
 	}
 
 
-	public void setXY() {
+	private void setXY() {
 		element.setAttribute("x", Float.toString(x));
 		element.setAttribute("y", Float.toString(y));
 	}
 
-	public void setStyling() {
+	private void setStyling() {
 		style = styling.entrySet().stream().map(e -> e.getKey() + ":" + e.getValue()).collect(Collectors.joining(";"));
 		
 		element.setAttribute("style", style);

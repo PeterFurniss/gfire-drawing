@@ -276,7 +276,7 @@ class PieceMaker implements SvgWriter {
 
 	
 
-	public void organiseFields( List<Map<String, String>> fieldDefinitions ) {
+	private void organiseFields( List<Map<String, String>> fieldDefinitions ) {
 		// organise the text and image fields.  
 		//    image fields are questions of where
 		//    text fields are all the attribues of the text except its content
@@ -315,7 +315,7 @@ class PieceMaker implements SvgWriter {
 	}
 
 
-	public void drawPieces( ) {
+	private void drawPieces( ) {
 		
 
 		
@@ -364,7 +364,7 @@ class PieceMaker implements SvgWriter {
 
 
 
-	public int drawSquarePieces( Map<String, IncrementType> incrementingFields, String transformStart, float antiScale,
+	private int drawSquarePieces( Map<String, IncrementType> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
 		PieceArranger arranger = (PieceArranger) pageArranger;
@@ -451,7 +451,7 @@ class PieceMaker implements SvgWriter {
 	}
 	
 
-	public int drawMapHexes( Map<String, IncrementType> incrementingFields, String startTransformScaling, float antiScale,
+	private int drawMapHexes( Map<String, IncrementType> incrementingFields, String startTransformScaling, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
 		HexArranger arranger = (HexArranger) pageArranger;
@@ -534,7 +534,7 @@ class PieceMaker implements SvgWriter {
 	}
 
 
-	public int drawCubePieces( Map<String, IncrementType> incrementingFields, String transformStart, float antiScale,
+	private int drawCubePieces( Map<String, IncrementType> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		// transform the single list of specs into cube sets
 		CubeArranger arranger = (CubeArranger) pageArranger;
@@ -636,7 +636,7 @@ class PieceMaker implements SvgWriter {
 
 
 
-	public Map<String, Integer> setIncrementors( Map<String, String> spec, Map<String, IncrementType> incrementingFields ) {
+	private Map<String, Integer> setIncrementors( Map<String, String> spec, Map<String, IncrementType> incrementingFields ) {
 		Map<String, Integer> incrementers = new HashMap<>();
 		for (Map.Entry<String, IncrementType> entry : incrementingFields.entrySet()) {
 			if (entry.getValue().isIncrementing()) {
@@ -651,7 +651,7 @@ class PieceMaker implements SvgWriter {
 
 
 
-	public String setColours( Map<String, String> spec, Map<String, String> foreColours, String oldBack ) {
+	private String setColours( Map<String, String> spec, Map<String, String> foreColours, String oldBack ) {
 		setForeColours(spec, foreColours);
 
 		String backColour = spec.get(BACKGROUND_COLOUR_FIELD_NAME);
@@ -664,7 +664,7 @@ class PieceMaker implements SvgWriter {
 
 
 
-	public void setForeColours( Map<String, String> spec, Map<String, String> foreColours ) {
+	private void setForeColours( Map<String, String> spec, Map<String, String> foreColours ) {
 		for (String choice : colourChoices) {
 			String colour = spec.get(choice);
 			
@@ -677,7 +677,7 @@ class PieceMaker implements SvgWriter {
 
 
 
-	public void setImages( Map<String, String> spec, Map<String, Image> images, int number ) {
+	private void setImages( Map<String, String> spec, Map<String, Image> images, int number ) {
 		for (ImageField imageField : imageFields) {
 			String imageName = spec.get(imageField.getName());
 			if (imageName.equals("")) {
@@ -704,7 +704,7 @@ class PieceMaker implements SvgWriter {
 	
 
 
-	public void writeOutputSvg(  ) {
+	private void writeOutputSvg(  ) {
 		piecesDoc.writeToFile(outputFilePath);
 	}
 
@@ -806,7 +806,7 @@ class PieceMaker implements SvgWriter {
 	}
 	
 
-	public XYcoords findOffsetInBox( SvgObject image, SvgObject box) {
+	private XYcoords findOffsetInBox( SvgObject image, SvgObject box) {
 		XYcoords boxTL = box.getTopLeft();
 		LOGGER.debug("box {}, TL {}", box.getId(), boxTL);
 		XYcoords boxBR = box.getBottomRight();
@@ -985,7 +985,7 @@ class PieceMaker implements SvgWriter {
 	}
 
 
-	public static int getAsInteger( String key, Map<String, String> spec ) {
+	private static int getAsInteger( String key, Map<String, String> spec ) {
 		String asString = spec.get(key);
 		if (asString.equals("")) {
 			return 0;

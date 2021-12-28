@@ -77,7 +77,7 @@ class SvgCircle extends SvgObject {
 		LOGGER.debug("after scaling, circle {} is centred at {}", getId(), getCentre());
 	}
 
-	public XYcoords makeCentre() {
+	private XYcoords makeCentre() {
 		return new XYcoords(cx, cy);
 	}
 
@@ -112,12 +112,12 @@ class SvgCircle extends SvgObject {
 		return new XYcoords(cx + r, cy + r);
 	}
 
-	public void setXY() {
+	private void setXY() {
 		element.setAttribute("cx", Float.toString(cx));
 		element.setAttribute("cy", Float.toString(cy));
 	}
 
-	public void setR() {
+	private void setR() {
 		element.setAttribute("r", Float.toString(r));
 	}
 	

@@ -17,7 +17,7 @@ public abstract class SvgObject {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SvgObject.class.getName());
 	protected static final Pattern STYLE_PATTERN = Pattern.compile("([\\w-]+):([^;]+)+(?:;|$)");
 
-	public static SvgObject makeSvgObject(Element element) {
+	static SvgObject makeSvgObject(Element element) {
 		String type = element.getLocalName();
 		switch (type) {
 		case "path":
@@ -39,7 +39,7 @@ public abstract class SvgObject {
 	 * apply transformation to the object's coordinates, based on the origin.
 	 * @return
 	 */
-	public final boolean internaliseTransformation() {
+	final boolean internaliseTransformation() {
 		return internaliseTransformation(null);
 	}
 	
@@ -63,11 +63,11 @@ public abstract class SvgObject {
 		return false;
 	}
 
-	public float convertPxToMm(float px) {
+	float convertPxToMm(float px) {
 		return px/96.0f * 25.4f;
 	}
 	
-	public SvgObject (Element originalElement) {
+	SvgObject (Element originalElement) {
 		this.element = originalElement;
 		this.id = element.getAttribute("id");
 

@@ -166,17 +166,14 @@ class GfMapBuilder extends SVGbuilder {
 	}
 	
 
-	public float hexCentreX (int row, int col, HexColour colour) {
+	private float hexCentreX (int row, int col, HexColour colour) {
 		return xCoord(row-1, col-1, colour) + hexSide; //patterns.getHexWidth()/2.0f;
 	}
 	
-
 	public float hexCentreY (int row, int col, HexColour colour) {
 		return yCoord(row-1, col-1, colour) + hexHalfHeight; // patterns.getHexHeight()/2.0f;
 	}
-	
 
-	;
 	/**
 	 * x coordinate of hex top-right origin (right ?) left, surely
 	 */
@@ -240,7 +237,7 @@ class GfMapBuilder extends SVGbuilder {
 
 	
 
-	public void addNumber(int row, int col, HexColour colour) {
+	private void addNumber(int row, int col, HexColour colour) {
 		Element number = addElement("text");
 		number.setAttribute("style", "font-family:Arial;font-size:" + Float.toString(8 * scaling));
 		number.setAttribute("x", Float.toString(xCoord(row, col, colour)+xNumber));

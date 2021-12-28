@@ -52,7 +52,7 @@ public class XmlUtil {
 		return deserialiseXmlFile(xmlFile);
 	}
 	
-	public static Element deserialiseXmlFile(File xmlFile) {
+	private static Element deserialiseXmlFile(File xmlFile) {
 		FileInputStream instream;
 		try {
 			instream = new FileInputStream(xmlFile);

@@ -71,7 +71,7 @@ class VerticalCubeArranger implements CubeArranger {
 	}
 
 
-	public void newOutputPage() {
+	private void newOutputPage() {
 		pageNumber++;
 		outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(pageNumber+1));
 		writer.setOutputLayer(outputLayer);
@@ -93,7 +93,7 @@ class VerticalCubeArranger implements CubeArranger {
 	}
 
 
-	public XYcoords getCubeLocation( int cubeRow, int cubeCol ) {
+	private XYcoords getCubeLocation( int cubeRow, int cubeCol ) {
 		return new XYcoords( MARGIN + cubeCol * horizSpacing + ( cubeRow % 2 == 0 ? evenExtra : 0), MARGIN + cubeRow * vertSpacing);
 	}
 
@@ -106,7 +106,7 @@ class VerticalCubeArranger implements CubeArranger {
 	}
 	
 
-	protected int findNumberInPage(int actualPiecesPerPage) {
+	private int findNumberInPage(int actualPiecesPerPage) {
 		int page = pieceNumber / actualPiecesPerPage;
 
 		if (page != pageNumber) {
@@ -129,7 +129,7 @@ class VerticalCubeArranger implements CubeArranger {
 	}
 
 
-	public void hideOtherLayers() {
+	private void hideOtherLayers() {
 		piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);
 	}
 	
@@ -139,7 +139,7 @@ class VerticalCubeArranger implements CubeArranger {
 	}
 	
 
-	protected void drawFiducialLines() {
+	private void drawFiducialLines() {
 		// row and cols counts are in cubes, not faces
 		float extra = 2.0f;
 		for (int r = 0; r <= currentRow ; r++) {

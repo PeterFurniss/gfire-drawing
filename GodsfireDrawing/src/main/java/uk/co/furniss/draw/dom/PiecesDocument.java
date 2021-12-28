@@ -114,7 +114,7 @@ public class PiecesDocument {
        svg.writeToFile(outFile);
 	}
 	
-	public void addDefObject(SvgObject object) {
+	private void addDefObject(SvgObject object) {
 		defs.appendChild(object.getElement());
 		
 	}

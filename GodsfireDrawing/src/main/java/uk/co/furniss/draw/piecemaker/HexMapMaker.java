@@ -291,9 +291,6 @@ class HexMapMaker implements SvgWriter {
 		
 	}
 
-
-
-
 	public int drawSquarePieces( List<String> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
@@ -386,7 +383,6 @@ class HexMapMaker implements SvgWriter {
 		}
 		
 	}
-
 
 	public int drawCubePieces( List<String> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
@@ -486,9 +482,6 @@ class HexMapMaker implements SvgWriter {
 		return totalPieces;
 	}
 
-
-
-
 	public Map<String, Integer> setIncrementors( Map<String, String> spec, List<String> incrementingFields ) {
 		Map<String, Integer> incrementers = new HashMap<>();
 		for (String incrementer : incrementingFields) {
@@ -496,9 +489,6 @@ class HexMapMaker implements SvgWriter {
 		}
 		return incrementers;
 	}
-
-
-
 
 	public String setColours( Map<String, String> spec, Map<String, String> foreColours, String oldBack ) {
 		for (String choice : colourChoices) {
@@ -515,8 +505,6 @@ class HexMapMaker implements SvgWriter {
 		}
 		return backColour;
 	}
-
-
 
 
 	public void setImages( Map<String, String> spec, Map<String, Image> images, int number ) {
@@ -540,9 +528,6 @@ class HexMapMaker implements SvgWriter {
 			}
 		}
 	}
-
-	
-
 
 	public void writeOutputSvg(  ) {
 		piecesDoc.writeToFile(outputFilePath);

@@ -48,7 +48,7 @@ class FullPageArranger implements PieceArranger {
 		newOutputPage();
 	}
 
-	public void newOutputPage() {
+	private void newOutputPage() {
 		pageNumber++;
 		outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(pageNumber+1));
 		writer.setOutputLayer(outputLayer);
@@ -87,7 +87,7 @@ class FullPageArranger implements PieceArranger {
 		hideOtherLayers();
 	}
 
-	public void hideOtherLayers() {
+	private void hideOtherLayers() {
 		piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);
 	}
 	

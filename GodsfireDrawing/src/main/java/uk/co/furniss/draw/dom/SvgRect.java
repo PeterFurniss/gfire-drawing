@@ -101,12 +101,12 @@ class SvgRect extends SvgObject {
 	}
 
 
-	public void setXY() {
+	private void setXY() {
 		element.setAttribute("x", Float.toString(x));
 		element.setAttribute("y", Float.toString(y));
 	}
 
-	public void setWH() {
+	private void setWH() {
 		element.setAttribute("width", Float.toString(width));
 		element.setAttribute("height", Float.toString(height));
 	}

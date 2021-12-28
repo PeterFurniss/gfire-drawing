@@ -26,10 +26,13 @@ class BattaliaArranger implements PieceArranger {
 	private final int colsPerRow;
 //	private final float piecePixels;
 	protected int pieceNumber;
+
 	protected int pageNumber;
 	private int currentRow;
 	private int groupCol;
+
 	protected PiecesDocument piecesDoc;
+
 	protected Element outputLayer;
 	private SvgWriter writer;
 	private int indexInGroup;
@@ -172,7 +175,7 @@ class BattaliaArranger implements PieceArranger {
 		justStarted = true;
 	}
 
-	public void newOutputPage() {
+	private void newOutputPage() {
 		pageNumber++;
 		outputLayer = piecesDoc.obtainEmptyLayer(OUTPUT_LAYER_BASE_NAME + Integer.toString(pageNumber+1));
 		writer.setOutputLayer(outputLayer);
@@ -200,7 +203,7 @@ class BattaliaArranger implements PieceArranger {
 	}
 
 
-	public void hideOtherLayers() {
+	private void hideOtherLayers() {
 		piecesDoc.hideAllLayersButOne(FIRST_OUTPUT_LAYER);
 	}
 	

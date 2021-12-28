@@ -7,7 +7,7 @@ public class XYcoords {
 	private final float y;
 	static final XYcoords ORIGIN = new XYcoords(0.0f, 0.0f);
 	
-	public XYcoords(String xStr, String yStr) {
+	XYcoords(String xStr, String yStr) {
 		this.x = Float.parseFloat(xStr);
 		this.y = Float.parseFloat(yStr);
 	}
@@ -18,7 +18,7 @@ public class XYcoords {
 		this.y = y;
 	}
 	
-	public XYcoords(String xy) {
+	XYcoords(String xy) {
 		String [] fields = xy.split(",");
 		this.x = Float.parseFloat(fields[0]);
 		this.y = Float.parseFloat(fields[1]);
