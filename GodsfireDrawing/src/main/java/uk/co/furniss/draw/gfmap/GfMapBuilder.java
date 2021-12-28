@@ -13,8 +13,6 @@ import uk.co.furniss.draw.dom.XPathUtil;
 
 class GfMapBuilder extends SVGbuilder {
 	
-	public static final XPathUtil XPU = XPathUtil.getSVG();
-	
 	private final float hexSide;
 	private final float hexHalfHeight;
 	// xUnit are the actual hexSide plus 	the interhex gap

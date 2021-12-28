@@ -19,7 +19,6 @@ class HexArranger implements OutputArranger {
 	private final float halfHeight;
 	private final float overlap;
 	
-	protected int pieceNumber;
 	private int maxRow;
 	private int maxCol;
 	protected PiecesDocument piecesDoc;

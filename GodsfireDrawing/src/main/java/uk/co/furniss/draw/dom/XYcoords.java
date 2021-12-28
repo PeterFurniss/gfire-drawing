@@ -5,7 +5,6 @@ import java.util.List;
 public class XYcoords {
 	private final float x;
 	private final float y;
-	public static final XYcoords MAXIMUM = new XYcoords(10000.0f, 10000.0f);
 	static final XYcoords ORIGIN = new XYcoords(0.0f, 0.0f);
 	
 	public XYcoords(String xStr, String yStr) {
@@ -61,10 +60,9 @@ public class XYcoords {
 	
 	public XYcoords bottomRightMost(XYcoords other) {
 		return new XYcoords( x > other.x ? x : other.x,  y > other.y ? y : other.y);
-		
 	}
 	
-	public XYcoords topLeftMost(XYcoords other) {
+	XYcoords topLeftMost(XYcoords other) {
 		return new XYcoords( x < other.x ? x : other.x,  y < other.y ? y : other.y);
 	}
 	

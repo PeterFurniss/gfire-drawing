@@ -168,15 +168,7 @@ public class SVGbuilder {
 		return String.format("%7.2f", xx).replaceAll("\\s*", "");
 	}
 
-	private String pathStep( float x, float y ) {
-		return String.format("%7.2f,%7.2f",  x, y).replaceAll("\\s*", "");
-	}
-
-	public Element addTranslatedClone( String pattern, float dx, float dy ) {
-		Element use = createTranslatedClone(pattern, dx, dy);
-		appendingElement.appendChild(use);
-		return use;
-	}
+	
 
 	Element createTranslatedClone( String pattern, float dx, float dy ) {
 		Element use = parentDocument.createElementNS(XPathUtil.SVG_NS, "use");

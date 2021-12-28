@@ -10,13 +10,9 @@ class TallyCounter {
 	public TallyCounter() {
 	}
 	
-	public boolean knownKey(String key) {
-		return counter.containsKey(key);
-	}
+
 	
-	public void increment(String key) {
-		increment(key, 1);
-	}
+	
 	
 	public void increment(String key, int n) {
 		Integer prev = counter.get(key);

@@ -18,22 +18,13 @@ public class SVGmangler  {
 
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SVGmangler.class.getName());
-	/**
-	 * build godsfire 3-d map
-	 * @param docElement	parent document (or element ?). Contains the pattern hexes
-	 * @param xSpacing		width a hex in whatever units
-	 */
-	public SVGmangler(Element docElement) {
-		super();
-	}
 
-
-	public static List<Element> getLayerElements(Element docElement) {
+	static List<Element> getLayerElements(Element docElement) {
 		return XPU.findElements(docElement, "//g[@inkscape:groupmode='layer']");
 	}
 	
 
-	public static List<String> getLayerNames(Element docElement) {
+	static List<String> getLayerNames(Element docElement) {
 		List<Element> layerElements = getLayerElements(docElement);
 		List<String> names = new ArrayList<>();
 		for (Element layer : layerElements) {
@@ -44,12 +35,12 @@ public class SVGmangler  {
 	}
 	
 
-	public static Element getLayerElement( Element docElement, String layerName ) {
+	static Element getLayerElement( Element docElement, String layerName ) {
 		return XPU.findElement(docElement, "//g[@inkscape:groupmode='layer' and @inkscape:label='" + layerName + "']");
 	}
 
 
-	public static SvgObject getSvgObject(Element topElement, String name) {
+	static SvgObject getSvgObject(Element topElement, String name) {
 		LOGGER.debug("Looking in " + topElement.getAttribute("id") + " for " + name);
 		Element xmlElement = XPU.findElement(topElement, ".//*[@id='" + name + "']");
 		if (xmlElement != null) {
@@ -67,16 +58,6 @@ public class SVGmangler  {
 			BaseElement node = new BaseElement(styledElement);
 			node.rgbColour();
 		}
-	}
-
-	public static void rotateColours(Element group, int rotations) {
-		
-		System.out.println("Looking for style in " + group.getNodeName() + ", id=" + group.getAttribute("id"));
-        for (Element styledElement : XPU.findElements(group, ".//*[@style]")) {
-			BaseElement node = new BaseElement(styledElement);
-			node.rotateColour(rotations);
-        }
-
 	}
 	
 	/**
