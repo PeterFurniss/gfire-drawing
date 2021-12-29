@@ -83,7 +83,7 @@ public class XmlUtil {
 		}
 	}
 	
-	public static String serialiseXml(Element topElement, boolean indent) {
+	static String serialiseXml(Element topElement, boolean indent) {
 		TransformerFactory factory = TransformerFactory.newInstance();
 		try {
 			Transformer t = factory.newTransformer();

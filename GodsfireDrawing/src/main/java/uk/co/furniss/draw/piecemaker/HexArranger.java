@@ -15,14 +15,14 @@ class HexArranger implements OutputArranger {
 	private static final float MARGIN = 10.0f;
 	private static final String OUTPUT_LAYER_NAME = "output";
 
-	protected final float hexSide;
+	private final float hexSide;
 	private final float halfHeight;
 	private final float overlap;
 	
 	private int maxRow;
 	private int maxCol;
-	protected PiecesDocument piecesDoc;
-	protected Element outputLayer;
+	private PiecesDocument piecesDoc;
+	private Element outputLayer;
 
 	private static final double COS30 = Math.cos(Math.PI/ 6.0);
 
@@ -79,7 +79,7 @@ class HexArranger implements OutputArranger {
 	}
 
 
-	public void hideOtherLayers() {
+	private void hideOtherLayers() {
 		piecesDoc.hideAllLayersButOne(OUTPUT_LAYER_NAME);
 	}
 	

@@ -170,7 +170,7 @@ class GfMapBuilder extends SVGbuilder {
 		return xCoord(row-1, col-1, colour) + hexSide; //patterns.getHexWidth()/2.0f;
 	}
 	
-	public float hexCentreY (int row, int col, HexColour colour) {
+	private float hexCentreY (int row, int col, HexColour colour) {
 		return yCoord(row-1, col-1, colour) + hexHalfHeight; // patterns.getHexHeight()/2.0f;
 	}
 

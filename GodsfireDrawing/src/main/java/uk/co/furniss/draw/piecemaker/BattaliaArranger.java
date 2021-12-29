@@ -21,19 +21,19 @@ class BattaliaArranger implements PieceArranger {
 	private static final String OUTPUT_LAYER_BASE_NAME = "output";
 	private static final String FIRST_OUTPUT_LAYER = OUTPUT_LAYER_BASE_NAME + "1";
 
-	protected final float pieceSize;
+	private final float pieceSize;
 	private final int rowsPerPage;
 	private final int colsPerRow;
 //	private final float piecePixels;
-	protected int pieceNumber;
+	private int pieceNumber;
 
-	protected int pageNumber;
+	private int pageNumber;
 	private int currentRow;
 	private int groupCol;
 
-	protected PiecesDocument piecesDoc;
+	private PiecesDocument piecesDoc;
 
-	protected Element outputLayer;
+	private Element outputLayer;
 	private SvgWriter writer;
 	private int indexInGroup;
 	private boolean justStarted;

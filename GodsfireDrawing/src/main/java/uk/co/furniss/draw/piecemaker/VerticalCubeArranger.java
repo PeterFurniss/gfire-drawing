@@ -18,15 +18,14 @@ class VerticalCubeArranger implements CubeArranger {
 	private static final String OUTPUT_LAYER_BASE_NAME = "output";
 	private static final String FIRST_OUTPUT_LAYER = OUTPUT_LAYER_BASE_NAME + "1";
 
-	protected final float gap;
 	private final int rowsPerPage;
 	private final int colsPerRow;
 	private final int piecesPerPage;
 	protected int pieceNumber;
-	protected int pageNumber;
+	private int pageNumber;
 	private int currentRow;
-	protected PiecesDocument piecesDoc;
-	protected Element outputLayer;
+	private PiecesDocument piecesDoc;
+	private Element outputLayer;
 	private SvgWriter writer;
 	private final float horizSpacing;
 	private final float vertSpacing;
@@ -41,7 +40,6 @@ class VerticalCubeArranger implements CubeArranger {
 	public VerticalCubeArranger(float pieceSize, float gap) {
 		this.pieceSize = pieceSize;
 		// non-interlocking
-		this.gap = gap;
 		horizSpacing = pieceSize * 2 + gap;
 		vertSpacing  = pieceSize * 5 + gap;
 	

@@ -219,7 +219,7 @@ class HexMapMaker implements SvgWriter {
 
 	
 
-	public void organiseFields( List<Map<String, String>> fieldDefinitions ) {
+	private void organiseFields( List<Map<String, String>> fieldDefinitions ) {
 		// organise the text and image fields.  
 		//    image fields are questions of where
 		//    text fields are all the attribues of the text except its content
@@ -256,7 +256,7 @@ class HexMapMaker implements SvgWriter {
 	}
 
 
-	public void drawPieces( ) {
+	private void drawPieces( ) {
 		
 		List<String> incrementingFields = textFields.stream().filter(TextField::isIncrement).map(TextField::getName)
 		        .collect(Collectors.toList());
@@ -291,7 +291,7 @@ class HexMapMaker implements SvgWriter {
 		
 	}
 
-	public int drawSquarePieces( List<String> incrementingFields, String transformStart, float antiScale,
+	private int drawSquarePieces( List<String> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		Map<String, Image> images = new HashMap<>();
 		
@@ -384,7 +384,7 @@ class HexMapMaker implements SvgWriter {
 		
 	}
 
-	public int drawCubePieces( List<String> incrementingFields, String transformStart, float antiScale,
+	private int drawCubePieces( List<String> incrementingFields, String transformStart, float antiScale,
 	        List<Map<String, String>> specs, int totalPieces, Map<String, String> foreColours ) {
 		// transform the single list of specs into cube sets
 		List<CubeSpec> cubies = new ArrayList<>();
@@ -482,7 +482,7 @@ class HexMapMaker implements SvgWriter {
 		return totalPieces;
 	}
 
-	public Map<String, Integer> setIncrementors( Map<String, String> spec, List<String> incrementingFields ) {
+	private Map<String, Integer> setIncrementors( Map<String, String> spec, List<String> incrementingFields ) {
 		Map<String, Integer> incrementers = new HashMap<>();
 		for (String incrementer : incrementingFields) {
 			incrementers.put(incrementer, getAsInteger(incrementer, spec));
@@ -490,7 +490,7 @@ class HexMapMaker implements SvgWriter {
 		return incrementers;
 	}
 
-	public String setColours( Map<String, String> spec, Map<String, String> foreColours, String oldBack ) {
+	private String setColours( Map<String, String> spec, Map<String, String> foreColours, String oldBack ) {
 		for (String choice : colourChoices) {
 			String colour = spec.get(choice);
 			
@@ -507,7 +507,7 @@ class HexMapMaker implements SvgWriter {
 	}
 
 
-	public void setImages( Map<String, String> spec, Map<String, Image> images, int number ) {
+	private void setImages( Map<String, String> spec, Map<String, Image> images, int number ) {
 		for (ImageField imageField : imageFields) {
 			String imageName = spec.get(imageField.getName());
 			if (imageName.equals("")) {
@@ -529,7 +529,7 @@ class HexMapMaker implements SvgWriter {
 		}
 	}
 
-	public void writeOutputSvg(  ) {
+	private void writeOutputSvg(  ) {
 		piecesDoc.writeToFile(outputFilePath);
 	}
 
@@ -641,7 +641,7 @@ class HexMapMaker implements SvgWriter {
 	}
 	
 
-	public XYcoords findOffsetInBox( SvgObject image, SvgObject box) {
+	private XYcoords findOffsetInBox( SvgObject image, SvgObject box) {
 		XYcoords boxTL = box.getTopLeft();
 		LOGGER.debug("box {}, TL {}", box.getId(), boxTL);
 		XYcoords boxBR = box.getBottomRight();
@@ -816,7 +816,7 @@ class HexMapMaker implements SvgWriter {
 	}
 
 
-	public static int getAsInteger( String key, Map<String, String> spec ) {
+	private static int getAsInteger( String key, Map<String, String> spec ) {
 		String asString = spec.get(key);
 		if (asString.equals("")) {
 			return 0;

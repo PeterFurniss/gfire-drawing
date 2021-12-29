@@ -12,7 +12,7 @@ class Rectangle implements Comparable<Rectangle>  {
 	private final float xCentre;
 	private final float yCentre;
 	private final String colour;
-	final double bearing;
+	private final double bearing;
 	private final double range;
 	
 	public Rectangle(Element rectElement, float xZero, float yZero) {

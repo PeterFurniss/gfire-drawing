@@ -107,7 +107,7 @@ public class XPathUtil {
 		}
 	}
 	
-	public String findString(Element context, String xpString) {
+	String findString(Element context, String xpString) {
 		XPathExpression xpe = getXPE(xpString);
 		try {
 			return (String) xpe.evaluate(context, XPathConstants.STRING);
@@ -118,7 +118,7 @@ public class XPathUtil {
 
 	}
 	
-	public List<Node> findNodes(Element context, String xpString) {
+	List<Node> findNodes(Element context, String xpString) {
 		XPathExpression xpe = getXPE(xpString);
 
 		try {

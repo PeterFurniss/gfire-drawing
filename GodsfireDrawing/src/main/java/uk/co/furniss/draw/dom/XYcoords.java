@@ -43,7 +43,7 @@ public class XYcoords {
 		return new XYcoords(x + other.x, y + other.y);
 	}
 	
-	public XYcoords subtract(XYcoords other) {
+	XYcoords subtract(XYcoords other) {
 		if (other == null)  {
 			return this;
 		}
@@ -58,7 +58,7 @@ public class XYcoords {
 		return new XYcoords(x, y + extra);
 	}
 	
-	public XYcoords bottomRightMost(XYcoords other) {
+	XYcoords bottomRightMost(XYcoords other) {
 		return new XYcoords( x > other.x ? x : other.x,  y > other.y ? y : other.y);
 	}
 	
@@ -85,18 +85,18 @@ public class XYcoords {
 		return x + "\t" + y;
 	}
 
-	public XYcoords meanWith( XYcoords o ) {
+	XYcoords meanWith( XYcoords o ) {
 		return new XYcoords( (x + o.x) / 2, (y + o.y) / 2);
 	}
 
-	public XYcoords scaleTo(XYcoords base, float factor) {
+	XYcoords scaleTo(XYcoords base, float factor) {
 		return scaleTo(base, factor, factor);
 	}
-	public XYcoords scaleTo(XYcoords base, float xFactor, float yFactor) {
+	XYcoords scaleTo(XYcoords base, float xFactor, float yFactor) {
 		return subtract(base).scale(xFactor,  yFactor).add(base);
 	}
 
-	public XYcoords scale(float xFactor, float yFactor) {
+	XYcoords scale(float xFactor, float yFactor) {
 		return new XYcoords(x * xFactor, y * yFactor);
 	}
 	

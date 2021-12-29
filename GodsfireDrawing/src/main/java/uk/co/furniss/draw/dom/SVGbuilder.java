@@ -19,8 +19,8 @@ public class SVGbuilder {
 
 	
 	protected final Element documentElement;
-	protected Element appendingElement;
-	Document parentDocument;
+	private Element appendingElement;
+	private Document parentDocument;
 	private int layers = 0;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(SVGbuilder.class.getName());
@@ -159,7 +159,7 @@ public class SVGbuilder {
 		appendingElement.appendChild(comment);
 	}
 	
-	public Text createText(String content) {
+	Text createText(String content) {
 		return parentDocument.createTextNode(content);
 		
 	}

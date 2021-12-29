@@ -21,7 +21,7 @@ class FullPageArranger implements PieceArranger {
 	private final int colsPerRow;
 	private final int piecesPerPage;
 	protected int pieceNumber;
-	protected int pageNumber;
+	private int pageNumber;
 	private int currentRow;
 	protected PiecesDocument piecesDoc;
 	protected Element outputLayer;
