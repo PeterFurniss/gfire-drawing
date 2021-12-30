@@ -24,9 +24,7 @@ import uk.co.furniss.draw.dom.XYcoords;
 import uk.co.furniss.xlsx.ExcelBook;
 
 /**
- * make a sheet of pieces specifiation file says how many of each, corner
- * numbers, which silhouette and colours (that will take som designing). piece
- * silhouette is an image from an input svg file. object has a specific name
+ * derived from piecemaker, to make hex maps
  */
 class HexMapMaker implements SvgWriter {
 

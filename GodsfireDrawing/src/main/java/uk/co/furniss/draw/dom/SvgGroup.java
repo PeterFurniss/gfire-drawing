@@ -35,7 +35,7 @@ class SvgGroup extends SvgObject {
 			if (yOffset.length() > 0) {
 				definedCentre = new XYcoords("0", yOffset);
 				element.removeAttribute("inkscape:transform-center-y");
-				LOGGER.info("defined centre is {}", definedCentre);
+				LOGGER.info("defined centre in y is {}", definedCentre);
 			}
 		}
 
@@ -75,7 +75,7 @@ class SvgGroup extends SvgObject {
 		return definedCentre;
 	}
 
-
+	
 	
 	@Override
 	public XYcoords getTopLeft() {
@@ -94,6 +94,9 @@ class SvgGroup extends SvgObject {
    			}
 		}
    		XYcoords topLeft = new XYcoords(leftmostX, topmostY);
+   		if (hasDefinedCentre()) {
+   			topLeft = topLeft.add(getDefinedCentre().minus());
+   		}
    		LOGGER.debug("for group {}, tl is {}", getId(), topLeft);
 		return topLeft;
 	}
@@ -163,12 +166,7 @@ class SvgGroup extends SvgObject {
 	public XYcoords getStart() {
 		return children.get(0).getStart();
 	}
-//	@Override
-//	public void applyTransform(XYcoords base, Transform trans) {
-//		for (SvgObject child : children) {
-//			child.applyTransform(base, trans);
-//		}
-//	}
+
 
 	@Override
 	public String toString() {

@@ -32,7 +32,6 @@ import uk.co.furniss.xlsx.ExcelBook;
  */
 class PieceMaker implements SvgWriter {
 
-
 	private static final String TYPE_TEXT = "text";
 
 	private static final String TYPE_IMAGE = "image";

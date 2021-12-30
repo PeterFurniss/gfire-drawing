@@ -45,10 +45,18 @@ class SvgPath extends SvgObject {
 	public SvgPath(Element element) {
 		super(element);
 		// remove any absolute paths
-		LOGGER.trace("constructing for path {}", element.getAttribute("id"));
+		LOGGER.info("constructing for path {}", element.getAttribute("id"));
 		makePathsRelative();
-		if (element.hasAttribute("inkscape:transform-center-y")) {
-			definedCentre = new XYcoords(element.getAttribute("inkscape:transform-center-x"), element.getAttribute("inkscape:transform-center-y"));
+		String xCentre = element.getAttribute("inkscape:transform-center-x");
+		String yCentre = element.getAttribute("inkscape:transform-center-y");
+		if (xCentre != "" || yCentre != "") {
+			if (xCentre == "") {
+				xCentre = "0.0";
+			}
+			if (yCentre == "") {
+				yCentre = "0.0";
+			}
+			definedCentre = new XYcoords(xCentre, yCentre);
 			LOGGER.info("defined centre is {}", definedCentre);
 		}
 		unscale();
